@@ -1,6 +1,8 @@
 import axios from 'axios'
 import type { InternalAxiosRequestConfig, AxiosError } from 'axios'
 import { useAuthStore } from '../store/authStore'
+import { showToast } from '../components/CustomToast'
+import { ERROR_MESSAGES } from '../constants'
 import type { ApiResponse } from '../types'
 
 // Augment the global Window interface for runtime config
@@ -26,15 +28,30 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config
 })
 
-// Response interceptor — handle ERR_09 (session expired / 401)
+// Response interceptor — handle global error codes and network failures
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiResponse>) => {
-    if (error.response?.data?.errorCode === 'ERR_09') {
+    const errorCode = error.response?.data?.errorCode
+
+    if (errorCode === 'ERR_09') {
+      // Session expired — clear auth and redirect to login
       useAuthStore.getState().clearAuth()
       console.warn('[Viscraft] Session expired. Redirecting to login.')
       window.location.href = '/'
+    } else if (errorCode === 'ERR_01') {
+      // Resource not found — toast and redirect to workspace
+      showToast({ type: 'error', title: ERROR_MESSAGES.ERR_01 })
+      window.location.href = '/workspace'
+    } else if (errorCode === 'ERR_08') {
+      // Project not found — toast and redirect to workspace
+      showToast({ type: 'error', title: ERROR_MESSAGES.ERR_08 })
+      window.location.href = '/workspace'
+    } else if (!error.response) {
+      // Network error (no response from server)
+      showToast({ type: 'error', title: ERROR_MESSAGES.NETWORK_ERROR })
     }
+
     return Promise.reject(error)
   }
 )

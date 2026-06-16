@@ -6,8 +6,11 @@ import { postFetcher } from '../../helper/fetcher'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { toRomanNumeral } from '../../pages/workspace/utils/romanNumeral'
 import { deleteProject } from '../../service/project'
+import { showToast } from '../CustomToast'
+import { ERROR_MESSAGES } from '../../constants'
 import { ConfirmationModal } from '../common/ConfirmationModal'
 import { ProjectModal } from '../../pages/workspace/components/ProjectModal'
+import type { AxiosError } from 'axios'
 import type { ApiResponse, Project } from '../../types'
 
 /**
@@ -49,6 +52,11 @@ export function ProjectSidebar() {
           setActiveProject(remaining[0].id)
         }
       }
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<ApiResponse>
+      const code = axiosError.response?.data?.errorCode
+      const message = code ? (ERROR_MESSAGES[code] ?? 'An error occurred') : ERROR_MESSAGES.NETWORK_ERROR
+      showToast({ type: 'error', title: message })
     } finally {
       setIsDeleting(false)
       setDeleteTarget(null)

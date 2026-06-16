@@ -2,6 +2,7 @@ import { ChakraProvider } from '@chakra-ui/react'
 import { SWRConfig } from 'swr'
 import { system } from './components/styles/theme'
 import { AppRouter } from './routes'
+import { ViscraftToaster } from './components/CustomToast'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         }}
       >
         <AppRouter />
+        <ViscraftToaster />
       </SWRConfig>
     </ChakraProvider>
   )

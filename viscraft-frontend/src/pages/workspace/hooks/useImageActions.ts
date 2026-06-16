@@ -1,7 +1,10 @@
 import { useSWRConfig } from 'swr'
 import { generateImage, deleteImage } from '../../../service/image'
 import { useWorkspaceStore } from '../../../store/workspaceStore'
-import type { Image } from '../../../types'
+import { showToast } from '../../../components/CustomToast'
+import { ERROR_MESSAGES } from '../../../constants'
+import type { AxiosError } from 'axios'
+import type { Image, ApiResponse } from '../../../types'
 
 /**
  * Extracts image card action logic: retry (re-generate same payload),
@@ -36,8 +39,11 @@ export function useImageActions() {
       })
 
       return response
-    } catch {
-      // Error handling is left to the caller or global interceptor
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<ApiResponse>
+      const code = axiosError.response?.data?.errorCode
+      const message = code ? (ERROR_MESSAGES[code] ?? 'An error occurred') : ERROR_MESSAGES.NETWORK_ERROR
+      showToast({ type: 'error', title: message })
     }
   }
 
@@ -56,8 +62,11 @@ export function useImageActions() {
         undefined,
         { revalidate: true }
       )
-    } catch {
-      // Error handling is left to the caller or global interceptor
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<ApiResponse>
+      const code = axiosError.response?.data?.errorCode
+      const message = code ? (ERROR_MESSAGES[code] ?? 'An error occurred') : ERROR_MESSAGES.NETWORK_ERROR
+      showToast({ type: 'error', title: message })
     }
   }
 

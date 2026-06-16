@@ -92,7 +92,7 @@ export function useAuthForm(onSuccess: () => void) {
 
       if (axiosError.response?.data?.errorCode) {
         const code = axiosError.response.data.errorCode
-        setApiError(ERROR_MESSAGES[code] ?? axiosError.response.data.message ?? 'An error occurred')
+        setApiError(ERROR_MESSAGES[code] ?? 'An error occurred')
       } else {
         setApiError(ERROR_MESSAGES.NETWORK_ERROR)
       }

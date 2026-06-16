@@ -1,5 +1,6 @@
 import { Box, Button, Flex, Text } from '@chakra-ui/react'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+import { GalleryGrid } from './components/GalleryGrid'
 
 /**
  * Workspace page shell with gallery area and floating Generate button.
@@ -46,12 +47,8 @@ export function WorkspacePage() {
 
   return (
     <Box position="relative" minH="100%" flex="1" p={{ base: '4', md: '6' }}>
-      {/* GalleryGrid placeholder — will be replaced by task 10.1 */}
-      <Box
-        data-testid="gallery-placeholder"
-        minH="200px"
-        borderRadius="sm"
-      />
+      {/* GalleryGrid — fetches and displays images for the active project */}
+      <GalleryGrid projectId={activeProjectId} />
 
       {/* Floating Generate button */}
       <Button

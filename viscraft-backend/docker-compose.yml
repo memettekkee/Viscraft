@@ -1,0 +1,64 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: viscraft-backend
+    depends_on:
+      - postgres
+    environment:
+      - APP_PORT=${APP_PORT:-8080}
+      - APP_ENV=${APP_ENV:-production}
+      - DB_HOST=postgres
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-viscraft}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash-preview-image-generation}
+      - STORAGE_PATH=/app/storage/images
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRY=${JWT_EXPIRY:-24h}
+    volumes:
+      - image-storage:/app/storage/images
+    networks:
+      - viscraft-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: viscraft-postgres
+    environment:
+      - POSTGRES_DB=${DB_NAME:-viscraft}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - viscraft-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.24-alpine
+    container_name: viscraft-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - image-storage:/app/storage/images:ro
+    depends_on:
+      - app
+    networks:
+      - viscraft-network
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    name: viscraft-pgdata
+  image-storage:
+    name: viscraft-image-storage
+
+networks:
+  viscraft-network:
+    name: viscraft-network
+    driver: bridge

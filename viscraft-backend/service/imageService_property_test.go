@@ -12,6 +12,7 @@ import (
 
 	"viscraft-backend/constant"
 	"viscraft-backend/model/request"
+	"viscraft-backend/pkg/gemini"
 	"viscraft-backend/repository"
 )
 
@@ -20,7 +21,7 @@ type mockGeminiClient struct {
 	callCount atomic.Int64
 }
 
-func (m *mockGeminiClient) Generate(ctx context.Context, prompt string) ([]byte, error) {
+func (m *mockGeminiClient) Generate(ctx context.Context, prompt string, refImage *gemini.ReferenceImage) ([]byte, error) {
 	m.callCount.Add(1)
 	return []byte("fake-image"), nil
 }
@@ -42,7 +43,7 @@ func (m *mockImageRepo) FindByPromptHash(hash string) (*repository.Image, error)
 	return nil, sql.ErrNoRows
 }
 
-func (m *mockImageRepo) InsertProcessing(userId string, req request.GenerateImageRequest, hash string) (string, error) {
+func (m *mockImageRepo) InsertProcessing(userId string, req request.GenerateImageRequest, hash string, usedReferenceImage bool) (string, error) {
 	m.insertCount.Add(1)
 	return "img-123", nil
 }

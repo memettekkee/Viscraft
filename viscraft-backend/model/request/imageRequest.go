@@ -1,14 +1,15 @@
 package request
 
 // GenerateImageRequest holds the fields needed to generate a new concept art image.
-// All fields are required and validated by the handler layer.
+// Required fields are validated by the handler layer. ReferenceImage is optional.
 type GenerateImageRequest struct {
 	BaseRequest
-	ProjectId string `json:"projectId" binding:"required"`
-	Prompt    string `json:"prompt" binding:"required"`
-	Genre     string `json:"genre" binding:"required"`
-	AssetType string `json:"assetType" binding:"required"`
-	Mood      string `json:"mood" binding:"required"`
+	ProjectId      string `json:"projectId" binding:"required"`
+	Prompt         string `json:"prompt" binding:"required"`
+	Genre          string `json:"genre" binding:"required"`
+	AssetType      string `json:"assetType" binding:"required"`
+	Mood           string `json:"mood" binding:"required"`
+	ReferenceImage string `json:"referenceImage,omitempty"` // base64-encoded, optional
 }
 
 // GetImageRequest retrieves a single image by its ID.

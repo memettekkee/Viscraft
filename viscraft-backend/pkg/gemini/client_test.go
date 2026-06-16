@@ -106,7 +106,7 @@ func TestGenerate_Success(t *testing.T) {
 	defer server.Close()
 
 	client := newTestClient(server.URL)
-	result, err := client.Generate(context.Background(), "a dark fantasy knight")
+	result, err := client.Generate(context.Background(), "a dark fantasy knight", nil)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -123,7 +123,7 @@ func TestGenerate_Non200Status(t *testing.T) {
 	defer server.Close()
 
 	client := newTestClient(server.URL)
-	_, err := client.Generate(context.Background(), "test prompt")
+	_, err := client.Generate(context.Background(), "test prompt", nil)
 	if err == nil {
 		t.Fatal("expected error for non-200 status")
 	}
@@ -154,7 +154,7 @@ func TestGenerate_EmptyImageData(t *testing.T) {
 	defer server.Close()
 
 	client := newTestClient(server.URL)
-	_, err := client.Generate(context.Background(), "test prompt")
+	_, err := client.Generate(context.Background(), "test prompt", nil)
 	if err == nil {
 		t.Fatal("expected error for empty image data")
 	}
@@ -171,7 +171,7 @@ func TestGenerate_InvalidJSON(t *testing.T) {
 	defer server.Close()
 
 	client := newTestClient(server.URL)
-	_, err := client.Generate(context.Background(), "test prompt")
+	_, err := client.Generate(context.Background(), "test prompt", nil)
 	if err == nil {
 		t.Fatal("expected error for invalid JSON")
 	}
@@ -201,7 +201,7 @@ func TestGenerate_ContextTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	_, err := client.Generate(ctx, "test prompt")
+	_, err := client.Generate(ctx, "test prompt", nil)
 	if err == nil {
 		t.Fatal("expected timeout error")
 	}
@@ -234,7 +234,7 @@ func TestGenerate_InvalidBase64(t *testing.T) {
 	defer server.Close()
 
 	client := newTestClient(server.URL)
-	_, err := client.Generate(context.Background(), "test prompt")
+	_, err := client.Generate(context.Background(), "test prompt", nil)
 	if err == nil {
 		t.Fatal("expected error for invalid base64")
 	}

@@ -11,18 +11,18 @@ import (
 
 // Image represents a row in the images table.
 type Image struct {
-	Id        string
-	ProjectId string
-	UserId    string
-	Prompt    string
+	Id         string
+	ProjectId  string
+	UserId     string
+	Prompt     string
 	PromptHash string
-	Genre     string
-	AssetType string
-	Mood      string
-	Status    string
-	FilePath  string
-	ErrorCode string
-	CreatedAt time.Time
+	Genre      string
+	AssetType  string
+	Mood       string
+	Status     string
+	FilePath   string
+	ErrorCode  string
+	CreatedAt  time.Time
 }
 
 // ImageRecord holds the minimal fields needed for cleanup operations.
@@ -149,13 +149,14 @@ func (r *ImageRepository) FindByPromptHash(hash string) (*Image, error) {
 
 // InsertProcessing inserts a new image record with status="processing" and returns the generated image ID.
 // The userId parameter is the authenticated user's ID for ownership enforcement.
-func (r *ImageRepository) InsertProcessing(userId string, req request.GenerateImageRequest, hash string) (string, error) {
+// The usedReferenceImage parameter tracks whether a reference image was provided for this generation.
+func (r *ImageRepository) InsertProcessing(userId string, req request.GenerateImageRequest, hash string, usedReferenceImage bool) (string, error) {
 	id := uuid.New().String()
 
 	_, err := r.db.Exec(
-		`INSERT INTO images (id, project_id, user_id, prompt, prompt_hash, genre, asset_type, mood, status)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'processing')`,
-		id, req.ProjectId, userId, req.Prompt, hash, req.Genre, req.AssetType, req.Mood,
+		`INSERT INTO images (id, project_id, user_id, prompt, prompt_hash, genre, asset_type, mood, status, used_reference_image)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'processing', $9)`,
+		id, req.ProjectId, userId, req.Prompt, hash, req.Genre, req.AssetType, req.Mood, usedReferenceImage,
 	)
 	if err != nil {
 		return "", err

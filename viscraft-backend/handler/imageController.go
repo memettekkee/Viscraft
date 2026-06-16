@@ -25,9 +25,10 @@ func NewImageController(imageService *service.ImageService) *ImageController {
 
 // Routes returns the route definitions for image endpoints.
 // All image routes are protected (require JWT authentication).
+// Note: /images/generate is excluded here and registered separately in main.go
+// with rate limit middleware applied.
 func (ic *ImageController) Routes() []router.Route {
 	return []router.Route{
-		{Path: "/images/generate", Handler: ic.Generate, Protected: true},
 		{Path: "/images/get", Handler: ic.Get, Protected: true},
 		{Path: "/images/list", Handler: ic.List, Protected: true},
 		{Path: "/images/delete", Handler: ic.Delete, Protected: true},

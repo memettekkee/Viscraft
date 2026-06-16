@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Viscraft Backend API Documentation</title>
+    <style>
+        body { font-family: monospace; max-width: 900px; margin: 40px auto; padding: 0 20px; line-height: 1.6; }
+        h1 { border-bottom: 2px solid #333; padding-bottom: 10px; }
+        h2 { border-bottom: 1px solid #999; padding-bottom: 5px; margin-top: 40px; }
+        h3 { margin-top: 30px; }
+        pre { background: #f4f4f4; padding: 12px; border: 1px solid #ddd; overflow-x: auto; }
+        code { background: #f4f4f4; padding: 2px 5px; }
+        table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f4f4f4; }
+        .badge { font-weight: bold; }
+        .public { color: green; }
+        .protected { color: red; }
+        hr { margin: 30px 0; }
+    </style>
+</head>
+<body>
+
+<h1>Viscraft Backend API Documentation</h1>
+<p>Base URL: <code>http://localhost:8080</code></p>
+<p>All endpoints use <strong>POST</strong> method with JSON body.<br>
+Protected endpoints require header: <code>Authorization: Bearer &lt;token&gt;</code></p>
+
+<hr>
+
+<h2>Authentication</h2>
+
+<h3>POST /users/create <span class="badge public">[PUBLIC]</span></h3>
+<p>Register a new user account. Returns JWT token on success.</p>
+
+<strong>Request Body:</strong>
+<pre>{
+  "email": "user@example.com",
+  "password": "mypassword123",
+  "name": "John Doe"
+}</pre>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+    <tr><td>email</td><td>string</td><td>Yes</td><td>Valid email format, max 255 chars</td></tr>
+    <tr><td>password</td><td>string</td><td>Yes</td><td>8-72 characters</td></tr>
+    <tr><td>name</td><td>string</td><td>No</td><td>Display name</td></tr>
+</table>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "User created successfully",
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}</pre>
+
+<hr>
+
+<h3>POST /users/login <span class="badge public">[PUBLIC]</span></h3>
+<p>Login with existing credentials. Returns JWT token.</p>
+
+<strong>Request Body:</strong>
+<pre>{
+  "email": "user@example.com",
+  "password": "mypassword123"
+}</pre>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+    <tr><td>email</td><td>string</td><td>Yes</td><td>Registered email</td></tr>
+    <tr><td>password</td><td>string</td><td>Yes</td><td>Account password</td></tr>
+</table>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}</pre>
+
+<hr>
+
+<h3>POST /users/get <span class="badge protected">[PROTECTED]</span></h3>
+<p>Get current authenticated user's profile.</p>
+
+<strong>Request Body:</strong>
+<pre>{}</pre>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "User retrieved successfully",
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}</pre>
+
+<hr>
+
+<h3>POST /users/delete <span class="badge protected">[PROTECTED]</span></h3>
+<p>Delete the authenticated user's account. Cascades to all projects and images.</p>
+
+<strong>Request Body:</strong>
+<pre>{}</pre>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "User deleted successfully"
+}</pre>
+
+<hr>
+
+<h2>Projects</h2>
+
+<h3>POST /projects/create <span class="badge protected">[PROTECTED]</span></h3>
+<p>Create a new project to organize generated images.</p>
+
+<strong>Request Body:</strong>
+<pre>{
+  "name": "My Fantasy World",
+  "description": "Concept art for my RPG game"
+}</pre>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+    <tr><td>name</td><td>string</td><td>Yes</td><td>1-255 characters</td></tr>
+    <tr><td>description</td><td>string</td><td>No</td><td>Optional description</td></tr>
+</table>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Project created successfully",
+  "data": {
+    "id": "uuid",
+    "name": "My Fantasy World",
+    "description": "Concept art for my RPG game",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}</pre>
+
+<hr>
+
+<h3>POST /projects/get <span class="badge protected">[PROTECTED]</span></h3>
+<p>Get a single project by ID.</p>
+
+<strong>Request Body:</strong>
+<pre>{
+  "id": "project-uuid-here"
+}</pre>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+    <tr><td>id</td><td>string</td><td>Yes</td><td>Project UUID</td></tr>
+</table>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Project retrieved successfully",
+  "data": {
+    "id": "uuid",
+    "name": "My Fantasy World",
+    "description": "Concept art for my RPG game",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}</pre>
+
+<hr>
+
+<h3>POST /projects/list <span class="badge protected">[PROTECTED]</span></h3>
+<p>List all projects belonging to the authenticated user.</p>
+
+<strong>Request Body:</strong>
+<pre>{}</pre>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Projects retrieved successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "name": "My Fantasy World",
+      "description": "Concept art for my RPG game",
+      "createdAt": "2024-01-15T10:30:00Z"
+    }
+  ]
+}</pre>
+
+<hr>
+
+<h3>POST /projects/delete <span class="badge protected">[PROTECTED]</span></h3>
+<p>Delete a project. All images in the project are also deleted.</p>
+
+<strong>Request Body:</strong>
+<pre>{
+  "id": "project-uuid-here"
+}</pre>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+    <tr><td>id</td><td>string</td><td>Yes</td><td>Project UUID</td></tr>
+</table>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Project deleted successfully"
+}</pre>
+
+<hr>
+
+<h2>Images</h2>
+
+<h3>POST /images/generate <span class="badge protected">[PROTECTED] [RATE LIMITED: 5/min]</span></h3>
+<p>Generate concept art using Gemini AI. Returns immediately with status "processing". Poll with /images/get to check completion.</p>
+<p>Optionally include a <code>referenceImage</code> (base64-encoded JPEG/PNG/WEBP, max 5MB decoded) to guide generation with a sketch or visual reference. The reference image is transient — never stored, only used during the Gemini API call.</p>
+
+<strong>Request Body:</strong>
+<pre>{
+  "projectId": "project-uuid-here",
+  "prompt": "dark armor knight with glowing eyes standing in a misty forest",
+  "genre": "fantasy",
+  "assetType": "character",
+  "mood": "dark",
+  "referenceImage": "/9j/4AAQSkZJRg..."
+}</pre>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Allowed Values</th></tr>
+    <tr><td>projectId</td><td>string</td><td>Yes</td><td>Must be a project you own</td></tr>
+    <tr><td>prompt</td><td>string</td><td>Yes</td><td>3-300 chars, no blocked words (nude, explicit, nsfw, gore)</td></tr>
+    <tr><td>genre</td><td>string</td><td>Yes</td><td>fantasy, sci-fi, post-apocalyptic, steampunk, horror</td></tr>
+    <tr><td>assetType</td><td>string</td><td>Yes</td><td>character, location, item, creature</td></tr>
+    <tr><td>mood</td><td>string</td><td>Yes</td><td>dark, epic, mysterious, whimsical</td></tr>
+    <tr><td>referenceImage</td><td>string</td><td>No</td><td>Base64-encoded image (JPEG/PNG/WEBP). Max 5MB decoded. Validated by magic bytes, not file extension.</td></tr>
+</table>
+
+<strong>Reference Image Notes:</strong>
+<ul>
+    <li>Format detected by magic bytes: JPEG (<code>FF D8 FF</code>), PNG (<code>89 50 4E 47</code>), WEBP (<code>RIFF....WEBP</code>)</li>
+    <li>Accepts both standard base64 (RFC 4648 §4) and URL-safe base64 (RFC 4648 §5) encoding</li>
+    <li>Max decoded size: 5,242,880 bytes (5MB)</li>
+    <li>Image is never persisted — only exists in memory during the Gemini API call</li>
+    <li>Does NOT affect cache: same text prompt returns cached result regardless of reference image</li>
+    <li>Invalid reference image (bad base64, unsupported format, or oversized) returns ERR_04</li>
+</ul>
+
+<strong>Response (202 - New generation started):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Image generation started",
+  "data": {
+    "id": "image-uuid",
+    "status": "processing",
+    "prompt": "dark armor knight with glowing eyes standing in a misty forest",
+    "genre": "fantasy",
+    "assetType": "character",
+    "mood": "dark",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}</pre>
+
+<strong>Response (200 - Cache hit, same prompt already generated):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Image retrieved from cache",
+  "data": {
+    "id": "image-uuid",
+    "status": "completed",
+    "fileUrl": "/storage/images/image-uuid.png",
+    "prompt": "dark armor knight with glowing eyes standing in a misty forest",
+    "genre": "fantasy",
+    "assetType": "character",
+    "mood": "dark",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}</pre>
+
+<strong>Response (422 - Invalid reference image):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": false,
+  "errorCode": "ERR_04",
+  "message": "Invalid prompt"
+}</pre>
+
+<hr>
+
+<h3>POST /images/get <span class="badge protected">[PROTECTED]</span></h3>
+<p>Get image details and status. Use this to poll after generation.</p>
+
+<strong>Request Body:</strong>
+<pre>{
+  "id": "image-uuid-here"
+}</pre>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+    <tr><td>id</td><td>string</td><td>Yes</td><td>Image UUID</td></tr>
+</table>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Image retrieved successfully",
+  "data": {
+    "id": "image-uuid",
+    "status": "completed",
+    "fileUrl": "/storage/images/image-uuid.png",
+    "prompt": "dark armor knight with glowing eyes",
+    "genre": "fantasy",
+    "assetType": "character",
+    "mood": "dark",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}</pre>
+
+<p>Possible status values: <code>processing</code>, <code>completed</code>, <code>failed</code></p>
+
+<hr>
+
+<h3>POST /images/list <span class="badge protected">[PROTECTED]</span></h3>
+<p>List all images in a project, ordered by newest first.</p>
+
+<strong>Request Body:</strong>
+<pre>{
+  "projectId": "project-uuid-here"
+}</pre>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+    <tr><td>projectId</td><td>string</td><td>Yes</td><td>Project UUID (must be yours)</td></tr>
+</table>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Images retrieved successfully",
+  "data": [
+    {
+      "id": "image-uuid",
+      "status": "completed",
+      "fileUrl": "/storage/images/image-uuid.png",
+      "prompt": "dark armor knight with glowing eyes",
+      "genre": "fantasy",
+      "assetType": "character",
+      "mood": "dark",
+      "createdAt": "2024-01-15T10:30:00Z"
+    }
+  ]
+}</pre>
+
+<hr>
+
+<h3>POST /images/delete <span class="badge protected">[PROTECTED]</span></h3>
+<p>Delete an image. Cannot delete images that are still processing.</p>
+
+<strong>Request Body:</strong>
+<pre>{
+  "id": "image-uuid-here"
+}</pre>
+
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+    <tr><td>id</td><td>string</td><td>Yes</td><td>Image UUID</td></tr>
+</table>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Image deleted successfully"
+}</pre>
+
+<hr>
+
+<h2>Health</h2>
+
+<h3>POST /health/check <span class="badge public">[PUBLIC]</span></h3>
+<p>Check if the service is running.</p>
+
+<strong>Request Body:</strong>
+<pre>{}</pre>
+
+<strong>Response (200):</strong>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Service is operational"
+}</pre>
+
+<hr>
+
+<h2>Error Responses</h2>
+<p>All errors follow this format:</p>
+<pre>{
+  "requestId": "uuid",
+  "success": false,
+  "errorCode": "ERR_XX",
+  "message": "Error description"
+}</pre>
+
+<table>
+    <tr><th>Error Code</th><th>HTTP Status</th><th>Description</th></tr>
+    <tr><td>ERR_01</td><td>404</td><td>Image or resource not found</td></tr>
+    <tr><td>ERR_02</td><td>429</td><td>Too many requests (rate limit exceeded)</td></tr>
+    <tr><td>ERR_03</td><td>504</td><td>Gemini API timeout (30s)</td></tr>
+    <tr><td>ERR_04</td><td>422</td><td>Invalid prompt or field validation failed</td></tr>
+    <tr><td>ERR_05</td><td>502</td><td>Gemini returned bad/empty response</td></tr>
+    <tr><td>ERR_06</td><td>500</td><td>File storage failed</td></tr>
+    <tr><td>ERR_07</td><td>500</td><td>Database operation failed</td></tr>
+    <tr><td>ERR_08</td><td>404</td><td>Project not found</td></tr>
+    <tr><td>ERR_09</td><td>401</td><td>Unauthorized (bad token or not your resource)</td></tr>
+</table>
+
+<hr>
+
+<h2>Postman Tips</h2>
+<ol>
+    <li>Call <code>/users/create</code> or <code>/users/login</code> first to get the JWT token</li>
+    <li>Set header <code>Authorization: Bearer &lt;paste-token-here&gt;</code> for all protected endpoints</li>
+    <li>Set header <code>Content-Type: application/json</code></li>
+    <li>After <code>/images/generate</code>, poll <code>/images/get</code> with the returned image ID until status is "completed" or "failed"</li>
+    <li>Rate limit: max 5 generate requests per minute per user</li>
+</ol>
+
+</body>
+</html>

@@ -15,6 +15,12 @@ import (
 
 const defaultBaseURL = "https://generativelanguage.googleapis.com/v1beta/models"
 
+// ReferenceImage holds decoded image data for multimodal generation.
+type ReferenceImage struct {
+	Data     []byte // raw image bytes
+	MimeType string // e.g. "image/png", "image/jpeg", "image/webp"
+}
+
 // Client wraps the Google Gemini Flash Image API.
 type Client struct {
 	apiKey     string
@@ -46,7 +52,8 @@ type content struct {
 }
 
 type part struct {
-	Text string `json:"text,omitempty"`
+	Text       string      `json:"text,omitempty"`
+	InlineData *inlineData `json:"inlineData,omitempty"`
 }
 
 type generationConfig struct {
@@ -76,24 +83,42 @@ type inlineData struct {
 	Data     string `json:"data"`
 }
 
-// Generate calls the Gemini Flash Image API with the given prompt and returns
-// the generated image bytes. The context is used for timeout propagation.
+// Generate calls the Gemini Flash Image API with the given prompt and optional
+// reference image, returning the generated image bytes.
+// If refImage is nil, sends a text-only request (existing behavior).
+// If refImage is non-nil, sends a multimodal request with inlineData + text parts.
 // Returns structured errors: ErrGeminiTimeout for deadline exceeded,
 // ErrGeminiBadResponse for non-200 status or invalid response data.
-func (c *Client) Generate(ctx context.Context, prompt string) ([]byte, error) {
+func (c *Client) Generate(ctx context.Context, prompt string, refImage *ReferenceImage) ([]byte, error) {
 	requestID := ""
 	if rid, ok := ctx.Value("requestId").(string); ok {
 		requestID = rid
 	}
 
+	// Build parts based on whether reference image is provided
+	var parts []part
+	if refImage != nil {
+		// Multimodal: image part first, then text part
+		parts = []part{
+			{
+				InlineData: &inlineData{
+					MimeType: refImage.MimeType,
+					Data:     base64.StdEncoding.EncodeToString(refImage.Data),
+				},
+			},
+			{Text: prompt},
+		}
+	} else {
+		// Text-only (existing behavior)
+		parts = []part{
+			{Text: prompt},
+		}
+	}
+
 	// Build request payload
 	reqBody := generateRequest{
 		Contents: []content{
-			{
-				Parts: []part{
-					{Text: prompt},
-				},
-			},
+			{Parts: parts},
 		},
 		GenerationConfig: generationConfig{
 			ResponseModalities: []string{"IMAGE"},

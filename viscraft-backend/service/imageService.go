@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"strings"
@@ -12,14 +13,14 @@ import (
 	"viscraft-backend/constant"
 	"viscraft-backend/model/request"
 	"viscraft-backend/model/response"
+	"viscraft-backend/pkg/gemini"
 	"viscraft-backend/pkg/logger"
 	"viscraft-backend/repository"
 )
 
-
 // GeminiGenerator defines the interface for generating images via the Gemini API.
 type GeminiGenerator interface {
-	Generate(ctx context.Context, prompt string) ([]byte, error)
+	Generate(ctx context.Context, prompt string, refImage *gemini.ReferenceImage) ([]byte, error)
 }
 
 // StorageSaver defines the interface for saving image files to storage.
@@ -331,6 +332,18 @@ func (s *ImageService) Generate(requestId, userId string, req request.GenerateIm
 		return response.GenerateImageResponse{}, err, false
 	}
 
+	// Step 2.5: Validate reference image (if provided)
+	var refImageBytes []byte
+	var refMimeType string
+	if req.ReferenceImage != "" {
+		var appErr *constant.AppError
+		refImageBytes, refMimeType, appErr = s.validateReferenceImage(req.ReferenceImage)
+		if appErr != nil {
+			logger.Warn(requestId, "reference image validation failed")
+			return response.GenerateImageResponse{}, appErr, false
+		}
+	}
+
 	// Step 3: Verify project ownership
 	if err := s.verifyProjectOwnership(requestId, req.ProjectId, userId); err != nil {
 		return response.GenerateImageResponse{}, err, false
@@ -353,14 +366,14 @@ func (s *ImageService) Generate(requestId, userId string, req request.GenerateIm
 	}
 
 	// Step 5: Insert processing record
-	imageId, err := s.imageRepo.InsertProcessing(userId, req, hash)
+	imageId, err := s.imageRepo.InsertProcessing(userId, req, hash, req.ReferenceImage != "")
 	if err != nil {
 		logger.Error(requestId, "failed to insert processing record", err)
 		return response.GenerateImageResponse{}, &constant.ErrDatabaseFailed, false
 	}
 
-	// Step 6: Spawn async goroutine for generation
-	go s.processGeneration(requestId, imageId, req)
+	// Step 6: Spawn async goroutine for generation (pass reference image bytes)
+	go s.processGeneration(requestId, imageId, req, refImageBytes, refMimeType)
 
 	// Step 7: Return 202 immediately
 	logger.Info(requestId, "image generation started", "imageId", imageId)
@@ -384,7 +397,8 @@ func (s *ImageService) Generate(requestId, userId string, req request.GenerateIm
 // processGeneration runs in a background goroutine. It calls the Gemini API,
 // saves the result to storage, and updates the database status.
 // It always terminates and updates the status exactly once.
-func (s *ImageService) processGeneration(requestId, imageId string, req request.GenerateImageRequest) {
+// refImageBytes and refMimeType are the decoded reference image data (both empty if no reference image).
+func (s *ImageService) processGeneration(requestId, imageId string, req request.GenerateImageRequest, refImageBytes []byte, refMimeType string) {
 	// Create independent context with 30s timeout (not tied to HTTP request context)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -393,8 +407,22 @@ func (s *ImageService) processGeneration(requestId, imageId string, req request.
 	prompt := buildPrompt(req.AssetType, req.Prompt, req.Genre, req.Mood)
 	logger.Info(requestId, "calling Gemini API", "imageId", imageId, "prompt", prompt)
 
+	// Construct reference image for Gemini (nil if no reference provided)
+	var refImage *gemini.ReferenceImage
+	if len(refImageBytes) > 0 {
+		refImage = &gemini.ReferenceImage{
+			Data:     refImageBytes,
+			MimeType: refMimeType,
+		}
+	}
+
 	// Call Gemini API
-	imageBytes, err := s.geminiClient.Generate(ctx, prompt)
+	imageBytes, err := s.geminiClient.Generate(ctx, prompt, refImage)
+
+	// Release reference image bytes to help GC
+	refImageBytes = nil
+	refImage = nil
+
 	if err != nil {
 		logger.Error(requestId, "Gemini API call failed", "imageId", imageId, err)
 		if ctx.Err() == context.DeadlineExceeded {
@@ -432,6 +460,63 @@ func (s *ImageService) processGeneration(requestId, imageId string, req request.
 // buildPrompt constructs the prompt string sent to the Gemini API.
 func buildPrompt(assetType, prompt, genre, mood string) string {
 	return fmt.Sprintf("Generate a %s concept art: %s. Style: %s. Mood: %s.", assetType, prompt, genre, mood)
+}
+
+// detectMimeType inspects magic bytes of the decoded image data to determine
+// the MIME type. Returns the detected MIME type and true if supported,
+// or ("", false) if the format is unrecognized or data is too short.
+// Detection is based solely on magic bytes, never file extension.
+func detectMimeType(data []byte) (string, bool) {
+	if len(data) < 12 {
+		return "", false
+	}
+
+	// JPEG: starts with FF D8 FF
+	if data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF {
+		return "image/jpeg", true
+	}
+
+	// PNG: starts with 89 50 4E 47 (‰PNG)
+	if data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47 {
+		return "image/png", true
+	}
+
+	// WEBP: RIFF....WEBP
+	if data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F' &&
+		data[8] == 'W' && data[9] == 'E' && data[10] == 'B' && data[11] == 'P' {
+		return "image/webp", true
+	}
+
+	return "", false
+}
+
+// validateReferenceImage decodes a base64-encoded reference image, validates
+// its size (≤ 5MB), and detects the MIME type from magic bytes.
+// Returns decoded bytes, detected MIME type, and nil on success.
+// Returns ERR_04 if decoding fails, size exceeds limit, or format is unsupported.
+func (s *ImageService) validateReferenceImage(referenceImage string) ([]byte, string, *constant.AppError) {
+	// Step 1: Decode base64 (standard encoding first, URL-safe as fallback)
+	decoded, err := base64.StdEncoding.DecodeString(referenceImage)
+	if err != nil {
+		decoded, err = base64.URLEncoding.DecodeString(referenceImage)
+		if err != nil {
+			return nil, "", &constant.ErrInvalidPrompt
+		}
+	}
+
+	// Step 2: Check size limit (5MB = 5,242,880 bytes)
+	const maxSize = 5 * 1024 * 1024
+	if len(decoded) > maxSize {
+		return nil, "", &constant.ErrInvalidPrompt
+	}
+
+	// Step 3: Detect MIME type from magic bytes
+	mimeType, valid := detectMimeType(decoded)
+	if !valid {
+		return nil, "", &constant.ErrInvalidPrompt
+	}
+
+	return decoded, mimeType, nil
 }
 
 // mapImageToData converts a repository Image to a response ImageData.

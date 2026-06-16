@@ -1,0 +1,1 @@
+// Image service types placeholder

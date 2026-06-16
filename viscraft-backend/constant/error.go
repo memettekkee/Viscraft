@@ -18,4 +18,5 @@ var (
 	ErrDatabaseFailed  = AppError{Code: "ERR_07", Message: "Database operation failed", HttpStatus: 500}
 	ErrProjectNotFound = AppError{Code: "ERR_08", Message: "Project not found", HttpStatus: 404}
 	ErrUnauthorized    = AppError{Code: "ERR_09", Message: "Unauthorized", HttpStatus: 401}
+	ErrInternalServer  = AppError{Code: "ERR_10", Message: "Internal server error", HttpStatus: 500}
 )

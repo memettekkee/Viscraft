@@ -85,18 +85,30 @@ export function ImageCard({ image, onRegenerate, onDelete }: ImageCardProps) {
             {errorMessage}
           </Text>
 
-          {/* Retry button */}
-          <Button
-            variant="outline"
-            size="sm"
-            minH="44px"
-            minW="44px"
-            onClick={handleRetry}
-            loading={isRetrying}
-            disabled={isRetrying}
-          >
-            Retry
-          </Button>
+          {/* Action buttons */}
+          <HStack gap="2">
+            <Button
+              variant="outline"
+              size="sm"
+              minH="44px"
+              minW="44px"
+              onClick={handleRetry}
+              loading={isRetrying}
+              disabled={isRetrying}
+            >
+              Retry
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              minH="44px"
+              minW="44px"
+              color="oxblood"
+              onClick={() => onDelete(image.id)}
+            >
+              Delete
+            </Button>
+          </HStack>
         </VStack>
       </Box>
     )

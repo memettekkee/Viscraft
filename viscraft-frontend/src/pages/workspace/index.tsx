@@ -2,16 +2,18 @@ import { Box, Button, Flex, Text } from '@chakra-ui/react'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { GalleryGrid } from './components/GalleryGrid'
 import { GenerateModal } from './components/GenerateModal'
+import { RegenerateModal } from './components/RegenerateModal'
 
 /**
  * Workspace page shell with gallery area and floating Generate button.
  * Shows EmptyState when no project is selected; otherwise renders the GalleryGrid placeholder.
  *
- * Validates: Requirements 4.1, 4.4
+ * Validates: Requirements 4.1, 4.4, 10.1, 10.2, 10.3
  */
 export function WorkspacePage() {
   const activeProjectId = useWorkspaceStore((s) => s.activeProjectId)
   const generateModalOpen = useWorkspaceStore((s) => s.generateModalOpen)
+  const regenerateSource = useWorkspaceStore((s) => s.regenerateSource)
   const openGenerateModal = useWorkspaceStore((s) => s.openGenerateModal)
   const closeModal = useWorkspaceStore((s) => s.closeModal)
 
@@ -79,8 +81,17 @@ export function WorkspacePage() {
         Generate
       </Button>
 
-      {/* Generate Modal */}
-      <GenerateModal isOpen={generateModalOpen} onClose={closeModal} />
+      {/* Generate Modal — shown when no regenerateSource */}
+      <GenerateModal
+        isOpen={generateModalOpen && regenerateSource === null}
+        onClose={closeModal}
+      />
+
+      {/* Regenerate Modal — shown when regenerateSource is set */}
+      <RegenerateModal
+        isOpen={generateModalOpen && regenerateSource !== null}
+        onClose={closeModal}
+      />
     </Box>
   )
 }

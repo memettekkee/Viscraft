@@ -22,6 +22,12 @@ type LoginResponse struct {
 	Data  *UserData `json:"data,omitempty"`
 }
 
+// GetUserResponse is returned when retrieving user profile data.
+type GetUserResponse struct {
+	BaseResponse
+	Data *UserData `json:"data,omitempty"`
+}
+
 // DeleteUserResponse is returned after successful user deletion.
 type DeleteUserResponse struct {
 	BaseResponse

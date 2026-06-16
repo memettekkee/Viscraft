@@ -1,1 +1,2 @@
-// Barrel file for route configuration
+export { router } from './routesConfig'
+export { AppRouter } from './renderRoutes'

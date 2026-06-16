@@ -1,1 +1,1 @@
-// Barrel file for Zustand stores
+export { useAuthStore } from './authStore'

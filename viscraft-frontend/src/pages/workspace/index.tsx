@@ -1,1 +1,7 @@
-// Workspace page placeholder
+export function WorkspacePage() {
+  return (
+    <div>
+      <h1>Workspace</h1>
+    </div>
+  )
+}

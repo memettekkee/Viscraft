@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   validateGenerateForm,
   estimateBase64DecodedSize,
-  GenerateFormData,
 } from './inputValidation'
+import type { GenerateFormData } from './inputValidation'
 
 function validForm(overrides: Partial<GenerateFormData> = {}): GenerateFormData {
   return {

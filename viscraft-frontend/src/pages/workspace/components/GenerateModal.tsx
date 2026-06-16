@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Box, Button, Flex, Text, Textarea, Image } from '@chakra-ui/react'
+import { Box, Button, Flex, Text, Textarea, Image, NativeSelectRoot, NativeSelectField } from '@chakra-ui/react'
 import { ReusableModal } from '../../../components/ReusableModal'
 import { useGenerateForm } from '../hooks/useGenerateForm'
 import { useGallery } from '../hooks/useGallery'
@@ -236,7 +236,7 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
                             handleGalleryImageSelect(img.fileUrl)
                           }
                         }}
-                        disabled={isSubmitting || isLoadingReference}
+                        aria-disabled={isSubmitting || isLoadingReference}
                         aria-label={`Use image "${img.prompt}" as reference`}
                       >
                         <Image
@@ -327,38 +327,41 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
         <Text as="label" fontSize="sm" fontWeight="medium" color="ink" mb="1" display="block">
           Genre
         </Text>
-        <Box
-          as="select"
-          value={genre}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-            setGenre(e.target.value as Genre | '')
-            if (errors.genre) {
-              setErrors((prev) => {
-                const next = { ...prev }
-                delete next.genre
-                return next
-              })
-            }
-          }}
+        <NativeSelectRoot
+          disabled={isSubmitting}
           width="100%"
           height="44px"
-          px="3"
-          fontFamily="body"
-          fontSize="sm"
-          bg="parchment"
-          color="ink"
-          borderWidth="1px"
-          borderColor={errors.genre ? 'oxblood' : 'amber'}
-          borderRadius="sm"
-          disabled={isSubmitting}
         >
-          <option value="">Select genre...</option>
-          {GENRE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </Box>
+          <NativeSelectField
+            value={genre}
+            onChange={(e) => {
+              setGenre(e.target.value as Genre | '')
+              if (errors.genre) {
+                setErrors((prev) => {
+                  const next = { ...prev }
+                  delete next.genre
+                  return next
+                })
+              }
+            }}
+            px="3"
+            fontFamily="body"
+            fontSize="sm"
+            bg="parchment"
+            color="ink"
+            borderWidth="1px"
+            borderColor={errors.genre ? 'oxblood' : 'amber'}
+            borderRadius="sm"
+            height="44px"
+          >
+            <option value="">Select genre...</option>
+            {GENRE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </NativeSelectField>
+        </NativeSelectRoot>
         {errors.genre && (
           <Text color="oxblood" fontSize="xs" mt="1">
             {errors.genre}
@@ -371,38 +374,41 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
         <Text as="label" fontSize="sm" fontWeight="medium" color="ink" mb="1" display="block">
           Asset Type
         </Text>
-        <Box
-          as="select"
-          value={assetType}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-            setAssetType(e.target.value as AssetType | '')
-            if (errors.assetType) {
-              setErrors((prev) => {
-                const next = { ...prev }
-                delete next.assetType
-                return next
-              })
-            }
-          }}
+        <NativeSelectRoot
+          disabled={isSubmitting}
           width="100%"
           height="44px"
-          px="3"
-          fontFamily="body"
-          fontSize="sm"
-          bg="parchment"
-          color="ink"
-          borderWidth="1px"
-          borderColor={errors.assetType ? 'oxblood' : 'amber'}
-          borderRadius="sm"
-          disabled={isSubmitting}
         >
-          <option value="">Select asset type...</option>
-          {ASSET_TYPE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </Box>
+          <NativeSelectField
+            value={assetType}
+            onChange={(e) => {
+              setAssetType(e.target.value as AssetType | '')
+              if (errors.assetType) {
+                setErrors((prev) => {
+                  const next = { ...prev }
+                  delete next.assetType
+                  return next
+                })
+              }
+            }}
+            px="3"
+            fontFamily="body"
+            fontSize="sm"
+            bg="parchment"
+            color="ink"
+            borderWidth="1px"
+            borderColor={errors.assetType ? 'oxblood' : 'amber'}
+            borderRadius="sm"
+            height="44px"
+          >
+            <option value="">Select asset type...</option>
+            {ASSET_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </NativeSelectField>
+        </NativeSelectRoot>
         {errors.assetType && (
           <Text color="oxblood" fontSize="xs" mt="1">
             {errors.assetType}
@@ -415,38 +421,41 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
         <Text as="label" fontSize="sm" fontWeight="medium" color="ink" mb="1" display="block">
           Mood
         </Text>
-        <Box
-          as="select"
-          value={mood}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-            setMood(e.target.value as Mood | '')
-            if (errors.mood) {
-              setErrors((prev) => {
-                const next = { ...prev }
-                delete next.mood
-                return next
-              })
-            }
-          }}
+        <NativeSelectRoot
+          disabled={isSubmitting}
           width="100%"
           height="44px"
-          px="3"
-          fontFamily="body"
-          fontSize="sm"
-          bg="parchment"
-          color="ink"
-          borderWidth="1px"
-          borderColor={errors.mood ? 'oxblood' : 'amber'}
-          borderRadius="sm"
-          disabled={isSubmitting}
         >
-          <option value="">Select mood...</option>
-          {MOOD_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </Box>
+          <NativeSelectField
+            value={mood}
+            onChange={(e) => {
+              setMood(e.target.value as Mood | '')
+              if (errors.mood) {
+                setErrors((prev) => {
+                  const next = { ...prev }
+                  delete next.mood
+                  return next
+                })
+              }
+            }}
+            px="3"
+            fontFamily="body"
+            fontSize="sm"
+            bg="parchment"
+            color="ink"
+            borderWidth="1px"
+            borderColor={errors.mood ? 'oxblood' : 'amber'}
+            borderRadius="sm"
+            height="44px"
+          >
+            <option value="">Select mood...</option>
+            {MOOD_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </NativeSelectField>
+        </NativeSelectRoot>
         {errors.mood && (
           <Text color="oxblood" fontSize="xs" mt="1">
             {errors.mood}

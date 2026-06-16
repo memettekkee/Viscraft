@@ -27,9 +27,48 @@ func NewImageController(imageService *service.ImageService) *ImageController {
 // All image routes are protected (require JWT authentication).
 func (ic *ImageController) Routes() []router.Route {
 	return []router.Route{
+		{Path: "/images/generate", Handler: ic.Generate, Protected: true},
 		{Path: "/images/get", Handler: ic.Get, Protected: true},
 		{Path: "/images/list", Handler: ic.List, Protected: true},
 		{Path: "/images/delete", Handler: ic.Delete, Protected: true},
+	}
+}
+
+// Generate handles image generation requests.
+// Returns HTTP 200 for cache hit, HTTP 202 for new generation, HTTP 422 for validation errors.
+func (ic *ImageController) Generate(c *gin.Context) {
+	requestId := c.GetString("requestId")
+	userId := c.GetString("userId")
+
+	var req request.GenerateImageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, response.BaseResponse{
+			RequestId: requestId,
+			Success:   false,
+			ErrorCode: constant.ErrInvalidPrompt.Code,
+			Message:   "Missing required fields",
+		})
+		return
+	}
+
+	res, appErr, cacheHit := ic.imageService.Generate(requestId, userId, req)
+	if appErr != nil {
+		c.JSON(appErr.HttpStatus, response.BaseResponse{
+			RequestId: requestId,
+			Success:   false,
+			ErrorCode: appErr.Code,
+			Message:   appErr.Message,
+		})
+		return
+	}
+
+	// Override requestId to ensure server-generated value is used
+	res.RequestId = requestId
+
+	if cacheHit {
+		c.JSON(http.StatusOK, res)
+	} else {
+		c.JSON(http.StatusAccepted, res)
 	}
 }
 

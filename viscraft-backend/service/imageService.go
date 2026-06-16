@@ -1,8 +1,12 @@
 package service
 
 import (
+	"context"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"viscraft-backend/constant"
@@ -12,18 +16,47 @@ import (
 	"viscraft-backend/repository"
 )
 
-// ImageService handles image-related business logic including retrieval,
-// listing, and deletion with filesystem cleanup.
+
+// GeminiGenerator defines the interface for generating images via the Gemini API.
+type GeminiGenerator interface {
+	Generate(ctx context.Context, prompt string) ([]byte, error)
+}
+
+// StorageSaver defines the interface for saving image files to storage.
+type StorageSaver interface {
+	Save(imageId string, data []byte) (string, error)
+}
+
+// ProjectOwnershipChecker defines the interface for verifying project ownership.
+type ProjectOwnershipChecker interface {
+	FindById(projectId, userId string) (*repository.Project, error)
+}
+
+// ImageService handles image-related business logic including generation,
+// retrieval, listing, and deletion with filesystem cleanup.
 type ImageService struct {
-	imageRepo *repository.ImageRepository
-	storage   StorageDeleter
+	imageRepo    *repository.ImageRepository
+	storage      StorageDeleter
+	storageSaver StorageSaver
+	geminiClient GeminiGenerator
+	projectRepo  ProjectOwnershipChecker
 }
 
 // NewImageService creates a new ImageService with the required dependencies.
-func NewImageService(imageRepo *repository.ImageRepository, storage StorageDeleter) *ImageService {
+// geminiClient, storageSaver, and projectRepo can be nil if generation is not needed.
+func NewImageService(
+	imageRepo *repository.ImageRepository,
+	storage StorageDeleter,
+	geminiClient GeminiGenerator,
+	storageSaver StorageSaver,
+	projectRepo ProjectOwnershipChecker,
+) *ImageService {
 	return &ImageService{
-		imageRepo: imageRepo,
-		storage:   storage,
+		imageRepo:    imageRepo,
+		storage:      storage,
+		geminiClient: geminiClient,
+		storageSaver: storageSaver,
+		projectRepo:  projectRepo,
 	}
 }
 
@@ -128,6 +161,277 @@ func (s *ImageService) DeleteImage(requestId, userId string, req request.DeleteI
 			Message:   "Image deleted successfully",
 		},
 	}, nil
+}
+
+// hashPrompt computes a SHA256 hash from the given parts joined by a pipe delimiter.
+// Returns a deterministic 64-character hexadecimal string.
+func (s *ImageService) hashPrompt(parts ...string) string {
+	combined := strings.Join(parts, "|")
+	hash := sha256.Sum256([]byte(combined))
+	return hex.EncodeToString(hash[:])
+}
+
+// blockedWords contains content terms that are not allowed in prompts.
+var blockedWords = []string{"nude", "explicit", "nsfw", "gore"}
+
+// validatePrompt checks that the prompt meets length requirements (3-300 characters
+// after trimming whitespace) and does not contain any blocked content words.
+// Returns nil if valid, or *constant.ErrInvalidPrompt if validation fails.
+func (s *ImageService) validatePrompt(prompt string) *constant.AppError {
+	trimmed := strings.TrimSpace(prompt)
+
+	if len(trimmed) < 3 {
+		return &constant.ErrInvalidPrompt
+	}
+
+	if len(trimmed) > 300 {
+		return &constant.ErrInvalidPrompt
+	}
+
+	lower := strings.ToLower(trimmed)
+	for _, word := range blockedWords {
+		if strings.Contains(lower, word) {
+			return &constant.ErrInvalidPrompt
+		}
+	}
+
+	return nil
+}
+
+// allowedGenres defines the valid genre values (case-sensitive).
+var allowedGenres = map[string]bool{
+	"fantasy":          true,
+	"sci-fi":           true,
+	"post-apocalyptic": true,
+	"steampunk":        true,
+	"horror":           true,
+}
+
+// allowedAssetTypes defines the valid assetType values (case-sensitive).
+var allowedAssetTypes = map[string]bool{
+	"character": true,
+	"location":  true,
+	"item":      true,
+	"creature":  true,
+}
+
+// allowedMoods defines the valid mood values (case-sensitive).
+var allowedMoods = map[string]bool{
+	"dark":       true,
+	"epic":       true,
+	"mysterious": true,
+	"whimsical":  true,
+}
+
+// validateFields checks that all required fields are present, non-empty after trim,
+// and that genre, assetType, and mood have valid values.
+// Returns nil if valid, or the appropriate *constant.AppError if validation fails.
+func (s *ImageService) validateFields(req request.GenerateImageRequest) *constant.AppError {
+	// Check required fields are non-empty after trim
+	if strings.TrimSpace(req.ProjectId) == "" {
+		return &constant.AppError{
+			Code:       constant.ErrInvalidPrompt.Code,
+			Message:    "projectId is required",
+			HttpStatus: constant.ErrInvalidPrompt.HttpStatus,
+		}
+	}
+	if strings.TrimSpace(req.Prompt) == "" {
+		return &constant.AppError{
+			Code:       constant.ErrInvalidPrompt.Code,
+			Message:    "prompt is required",
+			HttpStatus: constant.ErrInvalidPrompt.HttpStatus,
+		}
+	}
+	if strings.TrimSpace(req.Genre) == "" {
+		return &constant.AppError{
+			Code:       constant.ErrInvalidPrompt.Code,
+			Message:    "genre is required",
+			HttpStatus: constant.ErrInvalidPrompt.HttpStatus,
+		}
+	}
+	if strings.TrimSpace(req.AssetType) == "" {
+		return &constant.AppError{
+			Code:       constant.ErrInvalidPrompt.Code,
+			Message:    "assetType is required",
+			HttpStatus: constant.ErrInvalidPrompt.HttpStatus,
+		}
+	}
+	if strings.TrimSpace(req.Mood) == "" {
+		return &constant.AppError{
+			Code:       constant.ErrInvalidPrompt.Code,
+			Message:    "mood is required",
+			HttpStatus: constant.ErrInvalidPrompt.HttpStatus,
+		}
+	}
+
+	// Validate genre enum (case-sensitive)
+	if !allowedGenres[req.Genre] {
+		return &constant.AppError{
+			Code:       constant.ErrInvalidPrompt.Code,
+			Message:    "invalid genre value",
+			HttpStatus: constant.ErrInvalidPrompt.HttpStatus,
+		}
+	}
+
+	// Validate assetType enum (case-sensitive)
+	if !allowedAssetTypes[req.AssetType] {
+		return &constant.AppError{
+			Code:       constant.ErrInvalidPrompt.Code,
+			Message:    "invalid assetType value",
+			HttpStatus: constant.ErrInvalidPrompt.HttpStatus,
+		}
+	}
+
+	// Validate mood enum (case-sensitive)
+	if !allowedMoods[req.Mood] {
+		return &constant.AppError{
+			Code:       constant.ErrInvalidPrompt.Code,
+			Message:    "invalid mood value",
+			HttpStatus: constant.ErrInvalidPrompt.HttpStatus,
+		}
+	}
+
+	return nil
+}
+
+// verifyProjectOwnership checks that the given projectId belongs to the authenticated user.
+// Returns nil if valid, or *constant.AppError if the project doesn't exist or doesn't belong to the user.
+func (s *ImageService) verifyProjectOwnership(requestId, projectId, userId string) *constant.AppError {
+	if s.projectRepo == nil {
+		logger.Error(requestId, "project repository not configured")
+		return &constant.ErrInternalServer
+	}
+
+	_, err := s.projectRepo.FindById(projectId, userId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			logger.Warn(requestId, "project not found for image generation", "projectId", projectId, "userId", userId)
+			return &constant.ErrProjectNotFound
+		}
+		logger.Error(requestId, "failed to verify project ownership", err)
+		return &constant.ErrDatabaseFailed
+	}
+
+	return nil
+}
+
+// Generate implements the full image generation flow:
+// validate prompt → validate fields → verify project ownership → check cache → insert processing record → spawn goroutine → return 202
+// Returns a cache hit response (HTTP 200 equivalent) or a new generation response (HTTP 202 equivalent).
+func (s *ImageService) Generate(requestId, userId string, req request.GenerateImageRequest) (response.GenerateImageResponse, *constant.AppError, bool) {
+	// Step 1: Validate prompt (must pass before any DB/API interaction)
+	if err := s.validatePrompt(req.Prompt); err != nil {
+		logger.Warn(requestId, "prompt validation failed", "prompt", req.Prompt)
+		return response.GenerateImageResponse{}, err, false
+	}
+
+	// Step 2: Validate fields (genre, assetType, mood)
+	if err := s.validateFields(req); err != nil {
+		logger.Warn(requestId, "field validation failed")
+		return response.GenerateImageResponse{}, err, false
+	}
+
+	// Step 3: Verify project ownership
+	if err := s.verifyProjectOwnership(requestId, req.ProjectId, userId); err != nil {
+		return response.GenerateImageResponse{}, err, false
+	}
+
+	// Step 4: Compute hash and check cache
+	hash := s.hashPrompt(req.Prompt, req.Genre, req.AssetType, req.Mood)
+	cached, _ := s.imageRepo.FindByPromptHash(hash)
+	if cached != nil && cached.Status == "completed" {
+		logger.Info(requestId, "cache hit, returning existing image", "imageId", cached.Id)
+		data := mapImageToData(cached)
+		return response.GenerateImageResponse{
+			BaseResponse: response.BaseResponse{
+				RequestId: requestId,
+				Success:   true,
+				Message:   "Image retrieved from cache",
+			},
+			Data: &data,
+		}, nil, true // true = cache hit
+	}
+
+	// Step 5: Insert processing record
+	imageId, err := s.imageRepo.InsertProcessing(userId, req, hash)
+	if err != nil {
+		logger.Error(requestId, "failed to insert processing record", err)
+		return response.GenerateImageResponse{}, &constant.ErrDatabaseFailed, false
+	}
+
+	// Step 6: Spawn async goroutine for generation
+	go s.processGeneration(requestId, imageId, req)
+
+	// Step 7: Return 202 immediately
+	logger.Info(requestId, "image generation started", "imageId", imageId)
+	return response.GenerateImageResponse{
+		BaseResponse: response.BaseResponse{
+			RequestId: requestId,
+			Success:   true,
+			Message:   "Image generation started",
+		},
+		Data: &response.ImageData{
+			Id:        imageId,
+			Status:    "processing",
+			Prompt:    req.Prompt,
+			Genre:     req.Genre,
+			AssetType: req.AssetType,
+			Mood:      req.Mood,
+		},
+	}, nil, false // false = new generation (not cache hit)
+}
+
+// processGeneration runs in a background goroutine. It calls the Gemini API,
+// saves the result to storage, and updates the database status.
+// It always terminates and updates the status exactly once.
+func (s *ImageService) processGeneration(requestId, imageId string, req request.GenerateImageRequest) {
+	// Create independent context with 30s timeout (not tied to HTTP request context)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Build the prompt string for Gemini
+	prompt := buildPrompt(req.AssetType, req.Prompt, req.Genre, req.Mood)
+	logger.Info(requestId, "calling Gemini API", "imageId", imageId, "prompt", prompt)
+
+	// Call Gemini API
+	imageBytes, err := s.geminiClient.Generate(ctx, prompt)
+	if err != nil {
+		logger.Error(requestId, "Gemini API call failed", "imageId", imageId, err)
+		if ctx.Err() == context.DeadlineExceeded {
+			s.imageRepo.UpdateStatus(imageId, "failed", constant.ErrGeminiTimeout.Code)
+		} else {
+			s.imageRepo.UpdateStatus(imageId, "failed", constant.ErrGeminiBadResponse.Code)
+		}
+		return
+	}
+
+	// Validate response contains actual image data
+	if len(imageBytes) == 0 {
+		logger.Error(requestId, "Gemini returned empty image data", "imageId", imageId)
+		s.imageRepo.UpdateStatus(imageId, "failed", constant.ErrGeminiBadResponse.Code)
+		return
+	}
+
+	// Save to filesystem
+	filePath, err := s.storageSaver.Save(imageId, imageBytes)
+	if err != nil {
+		logger.Error(requestId, "filesystem save failed", "imageId", imageId, err)
+		s.imageRepo.UpdateStatus(imageId, "failed", constant.ErrStorageFailed.Code)
+		return
+	}
+
+	// Mark completed
+	if err := s.imageRepo.UpdateCompleted(imageId, filePath); err != nil {
+		logger.Error(requestId, "failed to update image status to completed", "imageId", imageId, err)
+		return
+	}
+
+	logger.Info(requestId, "image generation completed", "imageId", imageId, "filePath", filePath)
+}
+
+// buildPrompt constructs the prompt string sent to the Gemini API.
+func buildPrompt(assetType, prompt, genre, mood string) string {
+	return fmt.Sprintf("Generate a %s concept art: %s. Style: %s. Mood: %s.", assetType, prompt, genre, mood)
 }
 
 // mapImageToData converts a repository Image to a response ImageData.

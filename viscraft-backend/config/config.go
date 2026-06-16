@@ -75,13 +75,18 @@ func Load() *Config {
 	return cfg
 }
 
-// InitDB creates a database connection pool using the provided config.
-// It verifies connectivity with a ping and configures pool settings.
-func InitDB(cfg *Config) *sql.DB {
-	dsn := fmt.Sprintf(
+// buildDSN constructs a PostgreSQL connection string from the provided config.
+func buildDSN(cfg *Config) string {
+	return fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName,
 	)
+}
+
+// InitDB creates a database connection pool using the provided config.
+// It verifies connectivity with a ping and configures pool settings.
+func InitDB(cfg *Config) *sql.DB {
+	dsn := buildDSN(cfg)
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {

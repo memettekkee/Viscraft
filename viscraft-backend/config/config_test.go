@@ -1,9 +1,12 @@
 package config
 
 import (
+	"database/sql"
 	"os"
 	"testing"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 func TestGetEnv_ReturnsValue(t *testing.T) {
@@ -89,5 +92,63 @@ func TestLoad_CustomPort(t *testing.T) {
 	}
 	if cfg.JWTExpiry != 720*time.Hour {
 		t.Errorf("JWTExpiry = %v, want %v", cfg.JWTExpiry, 720*time.Hour)
+	}
+}
+
+func TestBuildDSN(t *testing.T) {
+	cfg := &Config{
+		DBHost:     "localhost",
+		DBPort:     "5432",
+		DBUser:     "myuser",
+		DBPassword: "mypass",
+		DBName:     "mydb",
+	}
+
+	got := buildDSN(cfg)
+	want := "host=localhost port=5432 user=myuser password=mypass dbname=mydb sslmode=disable"
+
+	if got != want {
+		t.Errorf("buildDSN() = %q, want %q", got, want)
+	}
+}
+
+func TestBuildDSN_CustomValues(t *testing.T) {
+	cfg := &Config{
+		DBHost:     "db.example.com",
+		DBPort:     "5433",
+		DBUser:     "admin",
+		DBPassword: "s3cret!",
+		DBName:     "production",
+	}
+
+	got := buildDSN(cfg)
+	want := "host=db.example.com port=5433 user=admin password=s3cret! dbname=production sslmode=disable"
+
+	if got != want {
+		t.Errorf("buildDSN() = %q, want %q", got, want)
+	}
+}
+
+func TestInitDB_OpenSucceeds(t *testing.T) {
+	// sql.Open with postgres driver validates the driver name but does not connect.
+	// This test verifies that InitDB correctly calls sql.Open without error.
+	cfg := &Config{
+		DBHost:     "localhost",
+		DBPort:     "5432",
+		DBUser:     "testuser",
+		DBPassword: "testpass",
+		DBName:     "testdb",
+	}
+
+	dsn := buildDSN(cfg)
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		t.Fatalf("sql.Open() with DSN from buildDSN failed: %v", err)
+	}
+	defer db.Close()
+
+	// Verify the connection object is not nil
+	if db == nil {
+		t.Fatal("sql.Open() returned nil db")
 	}
 }

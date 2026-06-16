@@ -1,6 +1,7 @@
 import { Box, Button, Flex, Text } from '@chakra-ui/react'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { GalleryGrid } from './components/GalleryGrid'
+import { GenerateModal } from './components/GenerateModal'
 
 /**
  * Workspace page shell with gallery area and floating Generate button.
@@ -10,7 +11,9 @@ import { GalleryGrid } from './components/GalleryGrid'
  */
 export function WorkspacePage() {
   const activeProjectId = useWorkspaceStore((s) => s.activeProjectId)
+  const generateModalOpen = useWorkspaceStore((s) => s.generateModalOpen)
   const openGenerateModal = useWorkspaceStore((s) => s.openGenerateModal)
+  const closeModal = useWorkspaceStore((s) => s.closeModal)
 
   if (!activeProjectId) {
     return (
@@ -75,6 +78,9 @@ export function WorkspacePage() {
       >
         Generate
       </Button>
+
+      {/* Generate Modal */}
+      <GenerateModal isOpen={generateModalOpen} onClose={closeModal} />
     </Box>
   )
 }

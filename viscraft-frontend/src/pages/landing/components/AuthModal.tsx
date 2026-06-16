@@ -45,6 +45,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       <Flex gap="2" mb="6">
         <Button
           flex="1"
+          minH="44px"
           variant={activeTab === 'login' ? 'solid' : 'outline'}
           onClick={() => handleTabSwitch('login')}
         >
@@ -52,6 +53,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </Button>
         <Button
           flex="1"
+          minH="44px"
           variant={activeTab === 'register' ? 'solid' : 'outline'}
           onClick={() => handleTabSwitch('register')}
         >
@@ -139,6 +141,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         width="full"
         variant="solid"
         mt="2"
+        minH="44px"
         disabled={hasValidationErrors || isSubmitting}
         onClick={handleSubmit}
       >

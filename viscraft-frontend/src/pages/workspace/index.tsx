@@ -67,6 +67,7 @@ export function WorkspacePage() {
         fontSize="md"
         px="6"
         py="5"
+        minH="44px"
         borderRadius="sm"
         zIndex="10"
         _hover={{ opacity: 0.9 }}

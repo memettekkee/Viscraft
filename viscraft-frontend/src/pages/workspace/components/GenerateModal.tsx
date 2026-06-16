@@ -127,6 +127,7 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
       <Flex gap="2" mb="6">
         <Button
           flex="1"
+          minH="44px"
           variant={mode === 'create' ? 'solid' : 'outline'}
           onClick={() => handleModeSwitch('create')}
           disabled={isSubmitting}
@@ -135,6 +136,7 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
         </Button>
         <Button
           flex="1"
+          minH="44px"
           variant={mode === 'from-reference' ? 'solid' : 'outline'}
           onClick={() => handleModeSwitch('from-reference')}
           disabled={isSubmitting}
@@ -179,6 +181,7 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
                 variant="outline"
                 onClick={handleClearReference}
                 disabled={isSubmitting}
+                minH="44px"
               >
                 Clear Reference
               </Button>
@@ -200,6 +203,7 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isSubmitting || isLoadingReference}
                 mb="3"
+                minH="44px"
               >
                 {isLoadingReference ? 'Loading...' : 'Upload Image'}
               </Button>
@@ -337,7 +341,7 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
             }
           }}
           width="100%"
-          height="40px"
+          height="44px"
           px="3"
           fontFamily="body"
           fontSize="sm"
@@ -381,7 +385,7 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
             }
           }}
           width="100%"
-          height="40px"
+          height="44px"
           px="3"
           fontFamily="body"
           fontSize="sm"
@@ -425,7 +429,7 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
             }
           }}
           width="100%"
-          height="40px"
+          height="44px"
           px="3"
           fontFamily="body"
           fontSize="sm"
@@ -455,6 +459,7 @@ export function GenerateModal({ isOpen, onClose }: GenerateModalProps) {
         width="full"
         variant="solid"
         mt="2"
+        minH="44px"
         disabled={isSubmitting}
         onClick={handleSubmit}
       >

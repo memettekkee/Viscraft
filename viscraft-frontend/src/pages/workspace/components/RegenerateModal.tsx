@@ -125,6 +125,7 @@ export function RegenerateModal({ isOpen, onClose }: RegenerateModalProps) {
       <Flex gap="2" mb="6">
         <Button
           flex="1"
+          minH="44px"
           variant={mode === 'create' ? 'solid' : 'outline'}
           onClick={() => handleModeSwitch('create')}
           disabled={isSubmitting}
@@ -133,6 +134,7 @@ export function RegenerateModal({ isOpen, onClose }: RegenerateModalProps) {
         </Button>
         <Button
           flex="1"
+          minH="44px"
           variant={mode === 'from-reference' ? 'solid' : 'outline'}
           onClick={() => handleModeSwitch('from-reference')}
           disabled={isSubmitting}
@@ -181,6 +183,7 @@ export function RegenerateModal({ isOpen, onClose }: RegenerateModalProps) {
                 variant="outline"
                 onClick={handleClearReference}
                 disabled={isSubmitting}
+                minH="44px"
               >
                 Clear Reference
               </Button>
@@ -202,6 +205,7 @@ export function RegenerateModal({ isOpen, onClose }: RegenerateModalProps) {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isSubmitting || isLoadingReference}
                 mb="3"
+                minH="44px"
               >
                 {isLoadingReference ? 'Loading...' : 'Upload Image'}
               </Button>
@@ -339,7 +343,7 @@ export function RegenerateModal({ isOpen, onClose }: RegenerateModalProps) {
             }
           }}
           width="100%"
-          height="40px"
+          height="44px"
           px="3"
           fontFamily="body"
           fontSize="sm"
@@ -383,7 +387,7 @@ export function RegenerateModal({ isOpen, onClose }: RegenerateModalProps) {
             }
           }}
           width="100%"
-          height="40px"
+          height="44px"
           px="3"
           fontFamily="body"
           fontSize="sm"
@@ -427,7 +431,7 @@ export function RegenerateModal({ isOpen, onClose }: RegenerateModalProps) {
             }
           }}
           width="100%"
-          height="40px"
+          height="44px"
           px="3"
           fontFamily="body"
           fontSize="sm"
@@ -457,6 +461,7 @@ export function RegenerateModal({ isOpen, onClose }: RegenerateModalProps) {
         width="full"
         variant="solid"
         mt="2"
+        minH="44px"
         disabled={isSubmitting || isLoadingSourceReference}
         onClick={handleSubmit}
       >

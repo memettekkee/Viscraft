@@ -133,8 +133,8 @@ export function ProjectSidebar() {
                   variant="plain"
                   size="xs"
                   color="warmgray"
-                  minW="24px"
-                  minH="24px"
+                  minW={{ base: '44px', md: '32px' }}
+                  minH={{ base: '44px', md: '32px' }}
                   p="0"
                   _hover={{ color: 'oxblood' }}
                   onClick={(e) => {
@@ -186,7 +186,9 @@ export function ProjectSidebar() {
               as="button"
               flexShrink={0}
               px="3"
-              py="1.5"
+              minH="44px"
+              display="flex"
+              alignItems="center"
               borderRadius="full"
               bg={isActive ? 'amber' : 'transparent'}
               borderWidth="1px"
@@ -213,7 +215,9 @@ export function ProjectSidebar() {
           as="button"
           flexShrink={0}
           px="3"
-          py="1.5"
+          minH="44px"
+          display="flex"
+          alignItems="center"
           borderRadius="full"
           borderWidth="1px"
           borderColor="amber"

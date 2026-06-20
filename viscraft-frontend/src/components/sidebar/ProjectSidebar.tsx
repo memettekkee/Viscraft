@@ -18,6 +18,7 @@ export function ProjectSidebar() {
   const { mutate } = useSWRConfig()
   const activeProjectId = useWorkspaceStore((s) => s.activeProjectId)
   const setActiveProject = useWorkspaceStore((s) => s.setActiveProject)
+  const clearActiveProject = useWorkspaceStore((s) => s.clearActiveProject)
   const clearAuth = useAuthStore((s) => s.clearAuth)
   const user = useAuthStore((s) => s.user)
 
@@ -42,6 +43,8 @@ export function ProjectSidebar() {
         const remaining = projects.filter((p) => p.id !== deleteTarget.id)
         if (remaining.length > 0) {
           setActiveProject(remaining[0].id)
+        } else {
+          clearActiveProject()
         }
       }
     } catch (err: unknown) {

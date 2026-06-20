@@ -1,3 +1,3 @@
 window.__VISCRAFT_CONFIG__ = {
-  API_BASE_URL: "http://localhost:8089"
+  API_BASE_URL: "your backend port"
 };

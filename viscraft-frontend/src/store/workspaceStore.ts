@@ -12,6 +12,7 @@ interface WorkspaceState {
 
 interface WorkspaceActions {
   setActiveProject: (projectId: string) => void
+  clearActiveProject: () => void
   openGenerateModal: (prefillPrompt?: string, regenerateScene?: Scene) => void
   closeModal: () => void
   openSceneDetail: (scene: Scene) => void
@@ -27,6 +28,7 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>((set)
   selectedScene: null,
 
   setActiveProject: (projectId) => set({ activeProjectId: projectId }),
+  clearActiveProject: () => set({ activeProjectId: null }),
   openGenerateModal: (prefillPrompt, regenerateScene) => set({
     generateModalOpen: true,
     prefillPrompt: prefillPrompt ?? null,

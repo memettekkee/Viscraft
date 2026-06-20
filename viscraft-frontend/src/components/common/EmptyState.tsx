@@ -1,13 +1,5 @@
 import { Button, Text, VStack } from '@chakra-ui/react'
 
-/**
- * Empty state placeholder displayed when a project has no images
- * or no project is selected. Provides an inviting call-to-action
- * to guide the user toward generating their first image.
- *
- * Validates: Requirements 11.1
- */
-
 export interface EmptyStateProps {
   onAction: () => void
   title?: string

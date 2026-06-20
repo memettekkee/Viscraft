@@ -2,12 +2,14 @@ package main
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 
 	"viscraft-backend/config"
 	"viscraft-backend/handler"
 	"viscraft-backend/middleware"
-	"viscraft-backend/pkg/gemini"
+	"viscraft-backend/pkg/imagegen"
 	"viscraft-backend/pkg/router"
 	"viscraft-backend/pkg/storage"
 	"viscraft-backend/repository"
@@ -16,16 +18,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// imageFinderAdapter bridges repository.ImageRepository to the service.ImageFinder
-// interface. The repository returns []repository.ImageRecord while the service
+// sceneFinderAdapter bridges repository.SceneRepository to the service.ImageFinder
+// interface. The repository returns []repository.SceneRecord while the service
 // expects []service.ImageRecord — both have an identical shape (Id string) but are
 // distinct types to avoid circular imports.
-type imageFinderAdapter struct {
-	repo *repository.ImageRepository
+type sceneFinderAdapter struct {
+	repo *repository.SceneRepository
 }
 
-func (a *imageFinderAdapter) FindImagesByUserId(userId string) ([]service.ImageRecord, error) {
-	records, err := a.repo.FindImagesByUserId(userId)
+func (a *sceneFinderAdapter) FindImagesByUserId(userId string) ([]service.ImageRecord, error) {
+	records, err := a.repo.FindScenesByUserId(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -46,21 +48,28 @@ func main() {
 	defer db.Close()
 
 	// Initialize external clients
-	geminiClient := gemini.NewClient(cfg.GeminiAPIKey, cfg.GeminiModel)
-	localStorage := storage.NewLocalStorage(cfg.StoragePath)
+	imagegenClient := imagegen.NewClient(cfg.PollinationsAPIKey)
+
+	// Set up storage paths
+	tempBasePath := filepath.Join(filepath.Dir(cfg.StoragePath), "temp")
+	if err := os.MkdirAll(tempBasePath, 0755); err != nil {
+		log.Fatalf("Failed to create temp storage directory: %v", err)
+	}
+	localStorage := storage.NewLocalStorage(cfg.StoragePath, tempBasePath, cfg.StoragePublicURL, cfg.StorageTempPublicURL)
 
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(db)
 	projectRepo := repository.NewProjectRepository(db)
-	imageRepo := repository.NewImageRepository(db)
+	sceneRepo := repository.NewSceneRepository(db)
+	promptOptionRepo := repository.NewPromptOptionRepository(db)
 
-	// Create the adapter that bridges ImageRepository → service.ImageFinder
-	imgFinderAdapter := &imageFinderAdapter{repo: imageRepo}
+	// Create the adapter that bridges SceneRepository → service.ImageFinder
+	sceneFinderAdapt := &sceneFinderAdapter{repo: sceneRepo}
 
 	// Initialize services with dependency injection
 	userService := service.NewUserService(
 		userRepo,
-		imgFinderAdapter,
+		sceneFinderAdapt,
 		localStorage,
 		cfg.JWTSecret,
 		cfg.JWTExpiry,
@@ -72,30 +81,40 @@ func main() {
 		localStorage,
 	)
 
-	imageService := service.NewImageService(
-		imageRepo,
-		localStorage, // StorageDeleter
-		geminiClient, // GeminiGenerator
-		localStorage, // StorageSaver
-		projectRepo,  // ProjectOwnershipChecker
+	sceneService := service.NewSceneService(
+		sceneRepo,
+		projectRepo,    // satisfies service.SceneProjectFinder
+		localStorage,   // satisfies service.SceneStorageSaver
+		localStorage,   // satisfies service.SceneStorageDeleter
+		imagegenClient, // satisfies service.SceneImageGenerator
 	)
 
 	// Initialize controllers
 	userController := handler.NewUserController(userService)
 	projectController := handler.NewProjectController(projectService)
-	imageController := handler.NewImageController(imageService)
+	sceneController := handler.NewSceneController(sceneService)
+	promptOptionController := handler.NewPromptOptionController(promptOptionRepo)
 	healthController := handler.NewHealthController()
 
-	// Create Gin engine with middleware chain: RequestID → Timeout → Recovery
+	// Create Gin engine with middleware chain: CORS → RequestID → Timeout → Recovery
 	r := gin.New()
+	r.Use(middleware.CORS())
 	r.Use(middleware.RequestID())
 	r.Use(middleware.Timeout(30 * time.Second))
 	r.Use(middleware.Recovery())
 
-	// Register /images/generate separately with JWTAuth + RateLimit middleware
+	// Serve static image files — in Docker this is handled by nginx,
+	// but this fallback ensures local development works without nginx.
+	r.Static("/storage/images", cfg.StoragePath)
+	r.Static("/storage/temp", tempBasePath)
+
+	// Register /scenes/generate separately with JWTAuth + RateLimit middleware
 	authMiddleware := middleware.JWTAuth(cfg.JWTSecret)
 	rateLimitMiddleware := middleware.RateLimit(5, 60*time.Second)
-	r.POST("/images/generate", authMiddleware, rateLimitMiddleware, imageController.Generate)
+	r.POST("/scenes/generate", authMiddleware, rateLimitMiddleware, sceneController.Generate)
+
+	// Public endpoint for prompt options (no auth required)
+	r.POST("/prompt-options", promptOptionController.ListByCategory)
 
 	// Register all other controllers via the router registry
 	err := router.Register(
@@ -103,7 +122,7 @@ func main() {
 		authMiddleware,
 		userController,
 		projectController,
-		imageController,
+		sceneController,
 		healthController,
 	)
 	if err != nil {

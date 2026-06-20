@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Viscraft API Reference</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px 32px; line-height: 1.7; color: #1a1a1a; background: #fff; font-size: 14px; }
+  @media print { body { padding: 20px; } .page-break { page-break-before: always; } }
+  h1 { font-size: 28px; font-weight: 700; border-bottom: 3px solid #C9762C; padding-bottom: 12px; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 36px 0 12px; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; color: #C9762C; }
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; color: #333; }
+  h4 { font-size: 14px; font-weight: 600; margin: 16px 0 6px; }
+  p { margin-bottom: 12px; }
+  pre, code { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  pre { background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 12px 0; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: #f6f8fa; font-weight: 600; padding: 10px 12px; border: 1px solid #d0d0d0; text-align: left; }
+  td { padding: 9px 12px; border: 1px solid #e0e0e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-public { background: #dcfce7; color: #166534; }
+  .badge-protected { background: #fef3c7; color: #92400e; }
+  .badge-post { background: #dbeafe; color: #1e40af; }
+  .badge-get { background: #d1fae5; color: #065f46; }
+  .info-box { background: #fff7ed; border-left: 4px solid #C9762C; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .warning-box { background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .success-box { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .header-meta { color: #666; font-size: 13px; margin-bottom: 32px; }
+  ul, ol { padding-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 16px 0; }
+  .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 32px 0; }
+  .endpoint-title { display: flex; align-items: center; gap: 10px; margin: 28px 0 8px; }
+</style>
+</head>
+<body>
+
+<h1>Viscraft API Reference</h1>
+<p class="header-meta">Base URL: <code>http://localhost:8089</code> &nbsp;|&nbsp; All endpoints use <strong>POST</strong> method with JSON body &nbsp;|&nbsp; Protected endpoints require <code>Authorization: Bearer &lt;token&gt;</code></p>
+
+<h2>Authentication</h2>
+<p>Base path: <code>/users</code></p>
+
+<h3><span class="badge badge-post">POST</span> /users/create &nbsp;<span class="badge badge-public">PUBLIC</span></h3>
+<p>Register a new user account. Returns a JWT token on success.</p>
+<h4>Request Body</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+  <tr><td>email</td><td>string</td><td>Yes</td><td>Valid email format, max 255 chars</td></tr>
+  <tr><td>password</td><td>string</td><td>Yes</td><td>8–72 characters</td></tr>
+  <tr><td>name</td><td>string</td><td>No</td><td>Display name</td></tr>
+</table>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "User created successfully",
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "Jane Doe",
+    "createdAt": "2025-06-15T10:30:00Z"
+  }
+}</pre>
+<h4>Error Codes</h4>
+<table>
+  <tr><th>Code</th><th>HTTP</th><th>When</th></tr>
+  <tr><td>ERR_11</td><td>422</td><td>Missing or invalid fields</td></tr>
+  <tr><td>ERR_12</td><td>409</td><td>Email already registered</td></tr>
+  <tr><td>ERR_07</td><td>500</td><td>Database operation failed</td></tr>
+</table>
+
+<hr>
+
+<h3><span class="badge badge-post">POST</span> /users/login &nbsp;<span class="badge badge-public">PUBLIC</span></h3>
+<p>Authenticate with existing credentials. Returns a JWT token.</p>
+<h4>Request Body</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+  <tr><td>email</td><td>string</td><td>Yes</td><td>Registered email</td></tr>
+  <tr><td>password</td><td>string</td><td>Yes</td><td>Account password</td></tr>
+</table>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "Jane Doe",
+    "createdAt": "2025-06-15T10:30:00Z"
+  }
+}</pre>
+<h4>Error Codes</h4>
+<table>
+  <tr><th>Code</th><th>HTTP</th><th>When</th></tr>
+  <tr><td>ERR_09</td><td>401</td><td>Invalid email or password</td></tr>
+  <tr><td>ERR_11</td><td>422</td><td>Validation failed</td></tr>
+</table>
+
+<hr>
+
+<h3><span class="badge badge-post">POST</span> /users/get &nbsp;<span class="badge badge-protected">PROTECTED</span></h3>
+<p>Get the currently authenticated user's profile.</p>
+<h4>Request Body</h4>
+<pre>{}</pre>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "User retrieved successfully",
+  "data": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "Jane Doe",
+    "createdAt": "2025-06-15T10:30:00Z"
+  }
+}</pre>
+<h4>Error Codes</h4>
+<table>
+  <tr><th>Code</th><th>HTTP</th><th>When</th></tr>
+  <tr><td>ERR_09</td><td>401</td><td>Missing or expired token</td></tr>
+  <tr><td>ERR_01</td><td>404</td><td>User not found</td></tr>
+</table>
+
+<hr>
+
+<h3><span class="badge badge-post">POST</span> /users/delete &nbsp;<span class="badge badge-protected">PROTECTED</span></h3>
+<p>Permanently delete the authenticated user's account. Cascades to all campaigns and ad shots.</p>
+<h4>Request Body</h4>
+<pre>{}</pre>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "User deleted successfully"
+}</pre>
+<h4>Error Codes</h4>
+<table>
+  <tr><th>Code</th><th>HTTP</th><th>When</th></tr>
+  <tr><td>ERR_09</td><td>401</td><td>Missing or expired token</td></tr>
+  <tr><td>ERR_07</td><td>500</td><td>Database operation failed</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<h2>Campaigns</h2>
+<p>Base path: <code>/projects</code></p>
+
+<h3><span class="badge badge-post">POST</span> /projects/create &nbsp;<span class="badge badge-protected">PROTECTED</span></h3>
+<p>Create a new campaign to organize product ad shots.</p>
+<h4>Request Body</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+  <tr><td>name</td><td>string</td><td>Yes</td><td>1–255 characters</td></tr>
+  <tr><td>description</td><td>string</td><td>No</td><td>Optional campaign description</td></tr>
+  <tr><td>productCategory</td><td>string</td><td>No</td><td>e.g. "Beverage", "Skincare"</td></tr>
+  <tr><td>visualStyle</td><td>string</td><td>No</td><td>e.g. "Minimal", "Editorial"</td></tr>
+</table>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Project created successfully",
+  "data": {
+    "id": "uuid",
+    "name": "Cold Brew Launch",
+    "description": "Summer 2025 product campaign",
+    "productCategory": "Beverage",
+    "visualStyle": "Minimal",
+    "createdAt": "2025-06-15T10:30:00Z"
+  }
+}</pre>
+<h4>Error Codes</h4>
+<table>
+  <tr><th>Code</th><th>HTTP</th><th>When</th></tr>
+  <tr><td>ERR_09</td><td>401</td><td>Missing or expired token</td></tr>
+  <tr><td>ERR_11</td><td>422</td><td>Validation failed (e.g. name missing)</td></tr>
+  <tr><td>ERR_07</td><td>500</td><td>Database operation failed</td></tr>
+</table>
+
+<hr>
+
+<h3><span class="badge badge-post">POST</span> /projects/get &nbsp;<span class="badge badge-protected">PROTECTED</span></h3>
+<p>Retrieve a single campaign by ID. Only returns campaigns owned by the authenticated user.</p>
+<h4>Request Body</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+  <tr><td>id</td><td>string</td><td>Yes</td><td>Campaign UUID</td></tr>
+</table>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Project retrieved successfully",
+  "data": { "id": "uuid", "name": "Cold Brew Launch", "description": "...", "createdAt": "..." }
+}</pre>
+<h4>Error Codes</h4>
+<table>
+  <tr><th>Code</th><th>HTTP</th><th>When</th></tr>
+  <tr><td>ERR_08</td><td>404</td><td>Campaign not found or not owned by user</td></tr>
+  <tr><td>ERR_09</td><td>401</td><td>Missing or expired token</td></tr>
+</table>
+
+<hr>
+
+<h3><span class="badge badge-post">POST</span> /projects/list &nbsp;<span class="badge badge-protected">PROTECTED</span></h3>
+<p>List all campaigns belonging to the authenticated user, ordered by creation date descending.</p>
+<h4>Request Body</h4>
+<pre>{}</pre>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Projects retrieved successfully",
+  "data": [
+    { "id": "uuid", "name": "Cold Brew Launch", "description": "...", "createdAt": "..." }
+  ]
+}</pre>
+
+<hr>
+
+<h3><span class="badge badge-post">POST</span> /projects/delete &nbsp;<span class="badge badge-protected">PROTECTED</span></h3>
+<p>Delete a campaign and all of its ad shots. This action is irreversible.</p>
+<h4>Request Body</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+  <tr><td>id</td><td>string</td><td>Yes</td><td>Campaign UUID</td></tr>
+</table>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Project deleted successfully"
+}</pre>
+<h4>Error Codes</h4>
+<table>
+  <tr><th>Code</th><th>HTTP</th><th>When</th></tr>
+  <tr><td>ERR_08</td><td>404</td><td>Campaign not found or not owned by user</td></tr>
+  <tr><td>ERR_07</td><td>500</td><td>Database operation failed</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<h2>Ad Shots</h2>
+<p>Base path: <code>/scenes</code></p>
+
+<div class="info-box">
+  <strong>Async Generation Flow</strong><br>
+  <code>POST /scenes/generate</code> returns <strong>202</strong> immediately with <code>status: "processing"</code>.
+  The frontend polls <code>/scenes/get</code> every 3 seconds until <code>status</code> becomes <code>"completed"</code> or <code>"failed"</code>.
+  Generation typically takes 10–60 seconds.
+</div>
+
+<h3><span class="badge badge-post">POST</span> /scenes/generate &nbsp;<span class="badge badge-protected">PROTECTED</span> &nbsp;<span style="background:#fce7f3;color:#9d174d;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600;">RATE LIMITED: 5/min</span></h3>
+<p>Trigger AI generation of a product ad shot. Returns 202 immediately; actual generation happens asynchronously in a background goroutine.</p>
+<h4>Request Body</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+  <tr><td>projectId</td><td>string</td><td>Yes</td><td>Campaign UUID (must be owned by authenticated user)</td></tr>
+  <tr><td>prompt</td><td>string</td><td>Yes</td><td>Raw user description, 3–300 chars. Stored as <code>user_prompt</code>.</td></tr>
+  <tr><td>generatedPrompt</td><td>string</td><td>No</td><td>Assembled prompt from <code>buildPrompt()</code>. If provided, this is what gets sent to the AI API. Stored as <code>generated_prompt</code>.</td></tr>
+  <tr><td>referenceSceneId</td><td>string</td><td>No</td><td>UUID of an existing ad shot to use as visual reference (image-editing mode).</td></tr>
+  <tr><td>uploadedReferenceImage</td><td>string</td><td>No</td><td>Base64-encoded JPEG/PNG/WebP, max 5MB decoded. Takes priority over <code>referenceSceneId</code>.</td></tr>
+</table>
+
+<h4>Prompt Logic</h4>
+<p>If <code>generatedPrompt</code> is provided, it is used as the actual AI prompt. If omitted, <code>prompt</code> is used directly. Both are persisted — <code>user_prompt</code> is the raw input the user typed, and <code>generated_prompt</code> is the structured prompt built by <code>buildPrompt()</code> on the frontend.</p>
+
+<h4>Response 202 (Generation Started)</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Generation started",
+  "data": {
+    "id": "scene-uuid",
+    "projectId": "project-uuid",
+    "orderIndex": 3,
+    "prompt": "A bottle of cold brew coffee",
+    "status": "processing",
+    "createdAt": "2025-06-15T10:30:00Z"
+  }
+}</pre>
+
+<h4>Error Codes</h4>
+<table>
+  <tr><th>Code</th><th>HTTP</th><th>When</th></tr>
+  <tr><td>ERR_02</td><td>429</td><td>Rate limit exceeded (5 per minute per user)</td></tr>
+  <tr><td>ERR_04</td><td>422</td><td>Invalid prompt (too short, too long, blocked words)</td></tr>
+  <tr><td>ERR_08</td><td>404</td><td>Campaign not found or not owned by user</td></tr>
+  <tr><td>ERR_11</td><td>422</td><td>Missing required fields</td></tr>
+  <tr><td>ERR_13</td><td>422</td><td>Content policy violation (prompt rejected by AI safety filter)</td></tr>
+</table>
+
+<div class="warning-box">
+  <strong>Async failure codes:</strong> ERR_03 (timeout), ERR_05 (bad/empty response), ERR_13 (content policy) are set on the scene record asynchronously after the HTTP 202 response. Poll <code>/scenes/get</code> to detect these.
+</div>
+
+<hr>
+
+<h3><span class="badge badge-post">POST</span> /scenes/get &nbsp;<span class="badge badge-protected">PROTECTED</span></h3>
+<p>Get a single ad shot by ID. Use this to poll for generation status after calling <code>/scenes/generate</code>.</p>
+<h4>Request Body</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+  <tr><td>id</td><td>string</td><td>Yes</td><td>Ad shot UUID</td></tr>
+</table>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Retrieved",
+  "data": {
+    "id": "scene-uuid",
+    "projectId": "project-uuid",
+    "orderIndex": 3,
+    "prompt": "A bottle of cold brew coffee",
+    "generatedPrompt": "Product: A bottle of cold brew coffee. white marble surface...",
+    "status": "completed",
+    "fileUrl": "/storage/images/scene-uuid.png",
+    "createdAt": "2025-06-15T10:30:00Z"
+  }
+}</pre>
+<p>Possible <code>status</code> values: <code>"processing"</code>, <code>"completed"</code>, <code>"failed"</code>. When <code>status</code> is <code>"failed"</code>, the <code>errorCode</code> field will be present.</p>
+
+<hr>
+
+<h3><span class="badge badge-post">POST</span> /scenes/list &nbsp;<span class="badge badge-protected">PROTECTED</span></h3>
+<p>List all ad shots in a campaign, ordered by <code>order_index</code> ascending (creation order).</p>
+<h4>Request Body</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+  <tr><td>projectId</td><td>string</td><td>Yes</td><td>Campaign UUID</td></tr>
+</table>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Retrieved",
+  "data": [
+    {
+      "id": "scene-uuid",
+      "projectId": "project-uuid",
+      "orderIndex": 1,
+      "prompt": "A bottle of cold brew coffee",
+      "generatedPrompt": "Product: A bottle of cold brew coffee...",
+      "status": "completed",
+      "fileUrl": "/storage/images/scene-uuid.png",
+      "createdAt": "2025-06-15T10:30:00Z"
+    }
+  ]
+}</pre>
+
+<hr>
+
+<h3><span class="badge badge-post">POST</span> /scenes/delete &nbsp;<span class="badge badge-protected">PROTECTED</span></h3>
+<p>Delete an ad shot record and its associated image file from storage.</p>
+<h4>Request Body</h4>
+<table>
+  <tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+  <tr><td>id</td><td>string</td><td>Yes</td><td>Ad shot UUID</td></tr>
+</table>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Deleted"
+}</pre>
+<h4>Error Codes</h4>
+<table>
+  <tr><th>Code</th><th>HTTP</th><th>When</th></tr>
+  <tr><td>ERR_01</td><td>404</td><td>Ad shot not found or not owned by user</td></tr>
+  <tr><td>ERR_07</td><td>500</td><td>Database operation failed</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<h2>Prompt Options</h2>
+
+<h3><span class="badge badge-post">POST</span> /prompt-options &nbsp;<span class="badge badge-public">PUBLIC</span></h3>
+<p>Retrieve all styling options used to populate the generate form dropdowns. Options are grouped by category and sorted by <code>sort_order</code>. No authentication required.</p>
+<h4>Request Body</h4>
+<pre>{}</pre>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Retrieved",
+  "data": [
+    { "id": "uuid", "category": "background", "label": "White Marble", "promptValue": "white marble surface with subtle veining", "sortOrder": 1 },
+    { "id": "uuid", "category": "lighting",   "label": "Natural Window", "promptValue": "soft natural window light from left", "sortOrder": 1 },
+    { "id": "uuid", "category": "mood",       "label": "Fresh & Clean", "promptValue": "fresh clean aesthetic, bright and airy", "sortOrder": 1 },
+    { "id": "uuid", "category": "angle",      "label": "45 Degrees",    "promptValue": "45-degree angle shot", "sortOrder": 1 },
+    { "id": "uuid", "category": "props",      "label": "Minimal Props", "promptValue": "minimal props, clean composition", "sortOrder": 1 }
+  ]
+}</pre>
+<h4>Option Categories</h4>
+<table>
+  <tr><th>Category</th><th>Description</th><th>Multi-select</th></tr>
+  <tr><td>background</td><td>Surface and backdrop style</td><td>No</td></tr>
+  <tr><td>lighting</td><td>Light source and quality</td><td>No</td></tr>
+  <tr><td>mood</td><td>Aesthetic tone and feel</td><td>No</td></tr>
+  <tr><td>angle</td><td>Camera perspective</td><td>No</td></tr>
+  <tr><td>props</td><td>Supporting elements in frame</td><td>Yes</td></tr>
+</table>
+
+<h2>Health</h2>
+
+<h3><span class="badge badge-post">POST</span> /health &nbsp;<span class="badge badge-public">PUBLIC</span></h3>
+<p>Check if the server is running. No authentication required.</p>
+<h4>Request Body</h4>
+<pre>{}</pre>
+<h4>Response 200</h4>
+<pre>{
+  "requestId": "uuid",
+  "success": true,
+  "message": "Service is operational"
+}</pre>
+
+<div class="page-break"></div>
+
+<h2>Error Response Format</h2>
+<p>All error responses follow this envelope:</p>
+<pre>{
+  "requestId": "uuid",
+  "success": false,
+  "errorCode": "ERR_XX",
+  "message": "Human-readable description"
+}</pre>
+
+<h2>Error Code Reference</h2>
+<table>
+  <tr><th>Code</th><th>HTTP Status</th><th>Meaning</th></tr>
+  <tr><td>ERR_01</td><td>404</td><td>Resource not found</td></tr>
+  <tr><td>ERR_02</td><td>429</td><td>Rate limit exceeded (5 generate requests/min per user)</td></tr>
+  <tr><td>ERR_03</td><td>504</td><td>AI generation timed out (60s text-only, 90s with reference)</td></tr>
+  <tr><td>ERR_04</td><td>422</td><td>Invalid prompt or reference image validation failed</td></tr>
+  <tr><td>ERR_05</td><td>502</td><td>AI API returned a bad or empty response</td></tr>
+  <tr><td>ERR_06</td><td>500</td><td>Image file storage failed</td></tr>
+  <tr><td>ERR_07</td><td>500</td><td>Database operation failed</td></tr>
+  <tr><td>ERR_08</td><td>404</td><td>Campaign not found or not owned by user</td></tr>
+  <tr><td>ERR_09</td><td>401</td><td>Unauthorized — missing, invalid, or expired JWT token</td></tr>
+  <tr><td>ERR_11</td><td>422</td><td>Validation failed — missing or malformed required fields</td></tr>
+  <tr><td>ERR_12</td><td>409</td><td>Resource already exists (e.g. email already registered)</td></tr>
+  <tr><td>ERR_13</td><td>422</td><td>Content policy violation — prompt rejected by AI safety filter</td></tr>
+</table>
+
+<h2>Async Generation Flow Detail</h2>
+<div class="info-box">
+  <strong>How async generation works end-to-end:</strong>
+</div>
+<ol>
+  <li>Client calls <code>POST /scenes/generate</code> — server validates input, inserts a DB record with <code>status="processing"</code>, and returns <strong>HTTP 202</strong> with the new scene ID.</li>
+  <li>A Go goroutine starts in the background and calls the Pollinations API (text-to-image GET or image-editing POST depending on whether a reference image was provided).</li>
+  <li>Frontend receives the 202 response and begins polling <code>POST /scenes/get</code> every 3 seconds using SWR's <code>refreshInterval</code>.</li>
+  <li>On AI success: goroutine saves the image to <code>./storage/images/{sceneId}.png</code> and updates the DB record to <code>status="completed"</code> with <code>file_url</code>.</li>
+  <li>On AI failure: goroutine sets <code>status="failed"</code> with the appropriate error code (ERR_03, ERR_05, or ERR_13).</li>
+  <li>Next polling cycle detects <code>status ≠ "processing"</code> — SWR stops polling and the UI renders the final state (image or error card).</li>
+</ol>
+
+<div class="success-box">
+  <strong>Quick Reference: Getting Started</strong><br>
+  1. Call <code>/users/login</code> (or <code>/users/create</code>) to get a JWT token.<br>
+  2. Set header <code>Authorization: Bearer &lt;token&gt;</code> on all subsequent requests.<br>
+  3. Call <code>/projects/create</code> to create a campaign.<br>
+  4. Call <code>/prompt-options</code> to fetch available styling options.<br>
+  5. Call <code>/scenes/generate</code> with a <code>projectId</code> and <code>prompt</code>.<br>
+  6. Poll <code>/scenes/get</code> with the returned scene ID every 3s until <code>status</code> is <code>"completed"</code> or <code>"failed"</code>.
+</div>
+
+</body>
+</html>

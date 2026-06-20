@@ -1,26 +1,39 @@
 import { create } from 'zustand'
-import type { Image } from '../types'
+import type { Scene } from '../types'
 
 interface WorkspaceState {
   activeProjectId: string | null
   generateModalOpen: boolean
-  regenerateSource: Image | null
+  prefillPrompt: string | null
+  regenerateSceneId: string | null
+  regenerateFileUrl: string | null
+  selectedScene: Scene | null
 }
 
 interface WorkspaceActions {
   setActiveProject: (projectId: string) => void
-  openGenerateModal: () => void
-  openRegenerateModal: (source: Image) => void
+  openGenerateModal: (prefillPrompt?: string, regenerateScene?: Scene) => void
   closeModal: () => void
+  openSceneDetail: (scene: Scene) => void
+  closeSceneDetail: () => void
 }
 
 export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>((set) => ({
   activeProjectId: null,
   generateModalOpen: false,
-  regenerateSource: null,
+  prefillPrompt: null,
+  regenerateSceneId: null,
+  regenerateFileUrl: null,
+  selectedScene: null,
 
   setActiveProject: (projectId) => set({ activeProjectId: projectId }),
-  openGenerateModal: () => set({ generateModalOpen: true, regenerateSource: null }),
-  openRegenerateModal: (source) => set({ generateModalOpen: true, regenerateSource: source }),
-  closeModal: () => set({ generateModalOpen: false, regenerateSource: null }),
+  openGenerateModal: (prefillPrompt, regenerateScene) => set({
+    generateModalOpen: true,
+    prefillPrompt: prefillPrompt ?? null,
+    regenerateSceneId: regenerateScene?.id ?? null,
+    regenerateFileUrl: regenerateScene?.fileUrl ?? null,
+  }),
+  closeModal: () => set({ generateModalOpen: false, prefillPrompt: null, regenerateSceneId: null, regenerateFileUrl: null }),
+  openSceneDetail: (scene) => set({ selectedScene: scene }),
+  closeSceneDetail: () => set({ selectedScene: null }),
 }))

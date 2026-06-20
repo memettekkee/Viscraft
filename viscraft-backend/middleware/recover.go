@@ -12,9 +12,7 @@ import (
 	"viscraft-backend/pkg/logger"
 )
 
-// Recovery returns a Gin middleware that catches panics during request handling,
-// logs the panic value and stack trace with the requestId, and returns a generic
-// HTTP 500 error response without exposing internal details.
+
 func Recovery() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {

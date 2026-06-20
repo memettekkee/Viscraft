@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { User } from '../types'
 
 interface AuthState {
@@ -13,12 +14,19 @@ interface AuthActions {
   updateUser: (user: User) => void
 }
 
-export const useAuthStore = create<AuthState & AuthActions>((set) => ({
-  token: null,
-  user: null,
-  isAuthenticated: false,
+export const useAuthStore = create<AuthState & AuthActions>()(
+  persist(
+    (set) => ({
+      token: null,
+      user: null,
+      isAuthenticated: false,
 
-  setAuth: (token, user) => set({ token, user, isAuthenticated: true }),
-  clearAuth: () => set({ token: null, user: null, isAuthenticated: false }),
-  updateUser: (user) => set({ user }),
-}))
+      setAuth: (token, user) => set({ token, user, isAuthenticated: true }),
+      clearAuth: () => set({ token: null, user: null, isAuthenticated: false }),
+      updateUser: (user) => set({ user }),
+    }),
+    {
+      name: 'viscraft-auth',
+    }
+  )
+)

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Viscraft — Tech Stack &amp; Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px 32px; line-height: 1.7; color: #1a1a1a; background: #fff; font-size: 14px; }
+  @media print { body { padding: 20px; } .page-break { page-break-before: always; } }
+  h1 { font-size: 28px; font-weight: 700; border-bottom: 3px solid #C9762C; padding-bottom: 12px; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 36px 0 12px; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; color: #C9762C; }
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; color: #333; }
+  h4 { font-size: 14px; font-weight: 600; margin: 16px 0 6px; }
+  p { margin-bottom: 12px; }
+  pre, code { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  pre { background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 12px 0; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: #f6f8fa; font-weight: 600; padding: 10px 12px; border: 1px solid #d0d0d0; text-align: left; }
+  td { padding: 9px 12px; border: 1px solid #e0e0e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .info-box { background: #fff7ed; border-left: 4px solid #C9762C; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .warning-box { background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .success-box { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .header-meta { color: #666; font-size: 13px; margin-bottom: 32px; }
+  ul, ol { padding-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 16px 0; }
+  .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 32px 0; }
+  .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; border: 1px solid #ccc; vertical-align: middle; margin-right: 6px; }
+  .flow-step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+  .flow-num { background: #C9762C; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<h1>Viscraft — Tech Stack &amp; Architecture</h1>
+<p class="header-meta">Version 1.0 &nbsp;|&nbsp; Go 1.21+ backend · React 19 frontend · PostgreSQL · Pollinations.ai</p>
+
+<h2>1. Overview</h2>
+<p>Viscraft is an AI-powered product ad photography generator. Users create campaigns, generate product ad shots by describing their product and selecting visual styling parameters, and manage a persistent gallery of results. All AI calls are routed through the Go backend — the browser never communicates with the AI API directly.</p>
+
+<div class="two-col">
+  <div class="card">
+    <h4>Core Problem Solved</h4>
+    <p style="margin-bottom:0">Small business owners and marketers need professional product photos but can't afford a photographer. Viscraft generates studio-quality ad shots from a text description in under 60 seconds.</p>
+  </div>
+  <div class="card">
+    <h4>Key Architecture Properties</h4>
+    <ul style="margin-bottom:0">
+      <li>All AI calls through backend only</li>
+      <li>Async generation via Go goroutines</li>
+      <li>Images persisted to local filesystem</li>
+      <li>Per-user data isolation at DB layer</li>
+      <li>Stateless JWT authentication</li>
+    </ul>
+  </div>
+</div>
+
+<h2>2. Tech Stack</h2>
+
+<h3>Backend</h3>
+<table>
+  <tr><th>Layer</th><th>Technology</th><th>Notes</th></tr>
+  <tr><td>Language</td><td>Go 1.21+</td><td>Strong concurrency primitives for async generation goroutines</td></tr>
+  <tr><td>HTTP Framework</td><td>Gin</td><td>Router, middleware chain, JSON binding</td></tr>
+  <tr><td>Database</td><td>PostgreSQL</td><td>Hosted on DigitalOcean VPS</td></tr>
+  <tr><td>Authentication</td><td>JWT (golang-jwt/jwt)</td><td>Stateless tokens; verified in JWTAuth middleware</td></tr>
+  <tr><td>Image Storage</td><td>Local filesystem</td><td><code>./storage/images/{sceneId}.png</code></td></tr>
+  <tr><td>AI API</td><td>Pollinations.ai — kontext model</td><td>Text-to-image: GET; Image-editing: POST multipart</td></tr>
+  <tr><td>Logging</td><td>Custom <code>pkg/logger</code></td><td>MultiWriter: stdout + <code>./logs/app-YYYY-MM-DD.log</code></td></tr>
+  <tr><td>Default Port</td><td>8089</td><td>Configurable via <code>APP_PORT</code> env var</td></tr>
+</table>
+
+<h3>Frontend</h3>
+<table>
+  <tr><th>Layer</th><th>Technology</th><th>Notes</th></tr>
+  <tr><td>Framework</td><td>React 19 + TypeScript + Vite</td><td>Type-safe component tree, fast HMR</td></tr>
+  <tr><td>UI Library</td><td>Chakra UI v3</td><td>Design tokens from Cartographer's Atlas theme</td></tr>
+  <tr><td>State Management</td><td>Zustand</td><td><code>authStore</code> (localStorage persistence) + <code>workspaceStore</code></td></tr>
+  <tr><td>Data Fetching</td><td>SWR</td><td>stale-while-revalidate; <code>refreshInterval</code> used for generation polling</td></tr>
+  <tr><td>HTTP Client</td><td>Axios</td><td>Instance with JWT interceptor that attaches token to every request</td></tr>
+  <tr><td>Animation</td><td>framer-motion</td><td>Card entrance animations, modal transitions</td></tr>
+  <tr><td>Router</td><td>React Router DOM v7</td><td>Two routes: <code>/</code> (landing) and <code>/workspace</code></td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<h2>3. Project Structure</h2>
+
+<h3>Backend (Go)</h3>
+<pre>viscraft-backend/
+├── config/           # Environment config loading (DB, JWT, storage, ports)
+├── constant/         # AppError definitions — all ERR_XX codes live here
+├── handler/          # HTTP controllers: user, project, scene, health, promptOption
+├── middleware/        # auth, cors, rateLimit, recover, requestId, timeout
+├── migrations/       # SQL migration files: 001 → 005 (applied in order)
+├── model/
+│   ├── request/      # Request structs bound from JSON body
+│   └── response/     # Response structs serialized to JSON
+├── pkg/
+│   ├── imagegen/     # Pollinations API client (text-to-image + image-editing)
+│   ├── logger/       # Dual-output logger (stdout + daily log file)
+│   ├── router/       # Route registry — controllers self-register their routes
+│   └── storage/      # Local filesystem storage (Save, Delete)
+├── repository/       # DB query layer: user, project, scene, promptOption
+├── service/          # Business logic: user, project, scene
+└── main.go           # Dependency wiring + Gin engine setup</pre>
+
+<h3>Frontend (React)</h3>
+<pre>viscraft-frontend/src/
+├── assets/           # Fonts, static images
+├── components/
+│   ├── common/       # ConfirmationModal, EmptyState, ErrorBanner
+│   ├── layout/       # Layout wrapper, MainWrapper
+│   ├── sidebar/      # ProjectSidebar (campaign list + create campaign)
+│   ├── skeleton/     # ImageCardSkeleton (used while polling)
+│   └── styles/       # Chakra UI theme — Cartographer's Atlas design system
+├── constants/        # Error message strings, dropdown category config
+├── helper/           # SWR fetcher utility
+├── lib/              # Axios instance with JWT interceptor, input validation helpers
+├── pages/
+│   ├── landing/      # Landing page + AuthModal + useAuthForm hook
+│   ├── workspace/    # Workspace page, all scene components, hooks
+│   └── notfound/     # 404 page
+├── routes/           # React Router configuration
+├── service/          # API service functions: auth, project, scene, promptOptions
+├── store/            # Zustand stores: authStore, workspaceStore
+└── types/            # Shared TypeScript types (Scene, Project, User, etc.)</pre>
+
+<h2>4. Database Schema</h2>
+<p>PostgreSQL database with 4 tables. Migrations are numbered 001–005 and applied in order.</p>
+
+<h4>users</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  <tr><td>id</td><td>UUID</td><td>Primary key</td></tr>
+  <tr><td>email</td><td>VARCHAR(255)</td><td>Unique, indexed</td></tr>
+  <tr><td>password_hash</td><td>VARCHAR</td><td>bcrypt hash</td></tr>
+  <tr><td>name</td><td>VARCHAR(255)</td><td>Display name, nullable</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>Default: now()</td></tr>
+</table>
+
+<h4>projects (campaigns)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  <tr><td>id</td><td>UUID</td><td>Primary key</td></tr>
+  <tr><td>user_id</td><td>UUID</td><td>Foreign key → users.id (CASCADE DELETE)</td></tr>
+  <tr><td>name</td><td>VARCHAR(255)</td><td>Campaign name</td></tr>
+  <tr><td>description</td><td>TEXT</td><td>Optional</td></tr>
+  <tr><td>product_category</td><td>VARCHAR(100)</td><td>Optional (e.g. "Beverage")</td></tr>
+  <tr><td>visual_style</td><td>VARCHAR(100)</td><td>Optional (e.g. "Minimal")</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>Default: now()</td></tr>
+</table>
+
+<h4>scenes (ad shots)</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  <tr><td>id</td><td>UUID</td><td>Primary key</td></tr>
+  <tr><td>project_id</td><td>UUID</td><td>Foreign key → projects.id (CASCADE DELETE)</td></tr>
+  <tr><td>user_id</td><td>UUID</td><td>Denormalized for fast user-scoped queries</td></tr>
+  <tr><td>order_index</td><td>INTEGER</td><td>Sequential within a campaign for consistent gallery order</td></tr>
+  <tr><td>user_prompt</td><td>TEXT</td><td>Raw text the user typed</td></tr>
+  <tr><td>generated_prompt</td><td>TEXT</td><td>Assembled prompt from buildPrompt() — sent to AI API</td></tr>
+  <tr><td>reference_scene_id</td><td>UUID</td><td>Nullable — ID of the scene used as reference (FK removed in migration 005)</td></tr>
+  <tr><td>used_uploaded_reference</td><td>BOOLEAN</td><td>True when user uploaded their own reference image</td></tr>
+  <tr><td>status</td><td>VARCHAR(20)</td><td>"processing", "completed", or "failed"</td></tr>
+  <tr><td>file_path</td><td>TEXT</td><td>Absolute filesystem path to stored PNG</td></tr>
+  <tr><td>file_url</td><td>TEXT</td><td>Public-accessible URL served by static handler</td></tr>
+  <tr><td>error_code</td><td>VARCHAR(10)</td><td>Set on failure: ERR_03, ERR_05, or ERR_13</td></tr>
+  <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>Default: now()</td></tr>
+</table>
+
+<h4>prompt_options</h4>
+<table>
+  <tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+  <tr><td>id</td><td>UUID</td><td>Primary key</td></tr>
+  <tr><td>category</td><td>VARCHAR(50)</td><td>background, lighting, mood, angle, props</td></tr>
+  <tr><td>label</td><td>VARCHAR(100)</td><td>Display label shown in the UI</td></tr>
+  <tr><td>prompt_value</td><td>TEXT</td><td>Segment appended to the generated prompt</td></tr>
+  <tr><td>sort_order</td><td>INTEGER</td><td>Display order within each category</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<h2>5. Middleware Chain</h2>
+<p>Every request passes through a global middleware chain before reaching any handler. The generate endpoint has two additional middleware layers applied specifically to it.</p>
+
+<div class="card" style="margin: 16px 0;">
+  <div style="display:flex; align-items:center; gap:0; flex-wrap:wrap; font-size:13px;">
+    <span style="background:#e0f2fe;color:#0369a1;padding:6px 12px;border-radius:6px;font-weight:600;">CORS</span>
+    <span style="color:#999;margin:0 8px;">→</span>
+    <span style="background:#e0f2fe;color:#0369a1;padding:6px 12px;border-radius:6px;font-weight:600;">RequestID</span>
+    <span style="color:#999;margin:0 8px;">→</span>
+    <span style="background:#e0f2fe;color:#0369a1;padding:6px 12px;border-radius:6px;font-weight:600;">Timeout (30s)</span>
+    <span style="color:#999;margin:0 8px;">→</span>
+    <span style="background:#e0f2fe;color:#0369a1;padding:6px 12px;border-radius:6px;font-weight:600;">Recovery</span>
+    <span style="color:#999;margin:0 8px;">→</span>
+    <span style="background:#fef3c7;color:#92400e;padding:6px 12px;border-radius:6px;font-weight:600;">JWTAuth *</span>
+    <span style="color:#999;margin:0 8px;">→</span>
+    <span style="background:#fce7f3;color:#9d174d;padding:6px 12px;border-radius:6px;font-weight:600;">RateLimit * (generate only)</span>
+  </div>
+  <p style="margin-top:10px; margin-bottom:0; font-size:12px; color:#666;">* JWTAuth is applied to all protected routes. RateLimit (5/min) is applied only to <code>POST /scenes/generate</code>.</p>
+</div>
+
+<table>
+  <tr><th>Middleware</th><th>Responsibility</th></tr>
+  <tr><td>CORS</td><td>Sets permissive CORS headers to allow frontend on any origin during development</td></tr>
+  <tr><td>RequestID</td><td>Generates a UUID per request and attaches it to context. Included in all response envelopes for tracing.</td></tr>
+  <tr><td>Timeout</td><td>30-second deadline for handler execution. Prevents slow requests from leaking goroutines.</td></tr>
+  <tr><td>Recovery</td><td>Catches panics and returns a 500 JSON response rather than crashing the server</td></tr>
+  <tr><td>JWTAuth</td><td>Parses and validates the Bearer token. Sets <code>userId</code> and <code>email</code> on the Gin context for downstream handlers.</td></tr>
+  <tr><td>RateLimit</td><td>In-memory per-user token bucket: max 5 generate requests per 60-second window</td></tr>
+</table>
+
+<h2>6. AI Integration Architecture</h2>
+
+<h3>Two Generation Modes</h3>
+<p>The <code>pkg/imagegen</code> client automatically selects the correct Pollinations API endpoint based on whether a reference image is provided:</p>
+
+<div class="two-col">
+  <div class="card">
+    <h4>Text-to-Image (no reference)</h4>
+    <p><strong>Endpoint:</strong> <code>GET /image/{prompt}</code></p>
+    <pre>GET https://gen.pollinations.ai/image/{url-encoded-prompt}
+  ?model=kontext&amp;nologo=true
+Authorization: Bearer {API_KEY}</pre>
+    <p>Returns raw PNG bytes. Fast (10–30s), reliable.</p>
+  </div>
+  <div class="card">
+    <h4>Image Editing (with reference)</h4>
+    <p><strong>Endpoint:</strong> <code>POST /v1/images/edits</code></p>
+    <pre>POST https://gen.pollinations.ai/v1/images/edits
+Content-Type: multipart/form-data
+
+Fields: prompt, model=kontext
+File:   image (reference PNG)</pre>
+    <p>Slower (30–90s), ~20% success rate for complex edits.</p>
+  </div>
+</div>
+
+<h3>Async Generation Lifecycle</h3>
+<div class="flow-step"><div class="flow-num">1</div><div>HTTP handler receives <code>POST /scenes/generate</code>, validates JWT + prompt, verifies campaign ownership.</div></div>
+<div class="flow-step"><div class="flow-num">2</div><div><code>InsertProcessing()</code> writes a DB record with <code>status="processing"</code> and returns the new <code>sceneId</code>.</div></div>
+<div class="flow-step"><div class="flow-num">3</div><div>Handler returns <strong>HTTP 202</strong> immediately with <code>{id, status: "processing"}</code>.</div></div>
+<div class="flow-step"><div class="flow-num">4</div><div><code>go s.processGeneration(...)</code> launches a goroutine that calls Pollinations with a 60s (or 90s) context timeout.</div></div>
+<div class="flow-step"><div class="flow-num">5</div><div>On success: saves PNG to <code>./storage/images/{sceneId}.png</code>, calls <code>UpdateCompleted()</code> with <code>file_path</code> and <code>file_url</code>.</div></div>
+<div class="flow-step"><div class="flow-num">6</div><div>On failure: calls <code>UpdateStatus("failed", errorCode)</code> — ERR_03 for timeout, ERR_13 for content policy, ERR_05 for all other failures.</div></div>
+<div class="flow-step"><div class="flow-num">7</div><div>Frontend SWR polling detects <code>status ≠ "processing"</code> and renders the completed image or failure card.</div></div>
+
+<h2>7. Design System: Cartographer's Atlas</h2>
+<p>The frontend uses a custom Chakra UI theme named "Cartographer's Atlas" — an editorial, cartography-inspired design language built around warm earth tones and heritage typefaces.</p>
+
+<h4>Color Palette</h4>
+<table>
+  <tr><th>Token</th><th>Hex</th><th>Usage</th></tr>
+  <tr><td>ink</td><td><span class="swatch" style="background:#16140F"></span> #16140F</td><td>Primary text, headings</td></tr>
+  <tr><td>parchment</td><td><span class="swatch" style="background:#FAF6EC"></span> #FAF6EC</td><td>Page background, card surfaces</td></tr>
+  <tr><td>amber</td><td><span class="swatch" style="background:#C9762C"></span> #C9762C</td><td>Primary brand color, CTAs, accents</td></tr>
+  <tr><td>moss</td><td><span class="swatch" style="background:#3E5C4E"></span> #3E5C4E</td><td>Secondary actions, success states</td></tr>
+  <tr><td>oxblood</td><td><span class="swatch" style="background:#8B2E2E"></span> #8B2E2E</td><td>Destructive actions, error states</td></tr>
+  <tr><td>warmgray</td><td><span class="swatch" style="background:#6B6555"></span> #6B6555</td><td>Muted text, metadata, captions</td></tr>
+</table>
+
+<h4>Typography</h4>
+<table>
+  <tr><th>Font</th><th>Role</th></tr>
+  <tr><td>Fraunces</td><td>Display / headings — editorial serif</td></tr>
+  <tr><td>Inter</td><td>Body text, UI labels</td></tr>
+  <tr><td>JetBrains Mono</td><td>Code, prompts, technical metadata</td></tr>
+</table>
+
+</body>
+</html>

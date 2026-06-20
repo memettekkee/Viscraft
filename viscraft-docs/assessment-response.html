@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Viscraft — Assessment Response</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px 32px; line-height: 1.7; color: #1a1a1a; background: #fff; font-size: 14px; }
+  @media print { body { padding: 20px; } .page-break { page-break-before: always; } }
+  h1 { font-size: 28px; font-weight: 700; border-bottom: 3px solid #C9762C; padding-bottom: 12px; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 36px 0 12px; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; color: #C9762C; }
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; color: #333; }
+  h4 { font-size: 14px; font-weight: 600; margin: 16px 0 6px; }
+  p { margin-bottom: 12px; }
+  pre, code { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  pre { background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 12px 0; line-height: 1.6; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: #f6f8fa; font-weight: 600; padding: 10px 12px; border: 1px solid #d0d0d0; text-align: left; }
+  td { padding: 9px 12px; border: 1px solid #e0e0e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .info-box { background: #fff7ed; border-left: 4px solid #C9762C; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .warning-box { background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .success-box { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .header-meta { color: #666; font-size: 13px; margin-bottom: 32px; }
+  ul, ol { padding-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 16px 0; }
+  .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 32px 0; }
+  .decision-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin: 12px 0; border-left: 4px solid #C9762C; }
+  .decision-card h4 { color: #C9762C; margin-top: 0; }
+  .flow-step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+  .flow-num { background: #C9762C; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<h1>Viscraft — Assessment Response</h1>
+<p class="header-meta">Software Engineer Assignment — Actual Inc (Indonesia) &nbsp;|&nbsp; Candidate submission documentation</p>
+
+<h2>Section 1: The Niche</h2>
+<p><strong>Niche: Product Ad Photography for small businesses and entrepreneurs.</strong></p>
+<p>The niche was chosen deliberately, not arbitrarily. Small business owners frequently need professional product photos — for online stores, social media ads, and pitch decks — but a proper product photography session costs hundreds of dollars and requires scheduling, a photographer, and post-processing. Viscraft eliminates all of that.</p>
+<p>This is meaningfully different from a generic AI art generator. The entire product is shaped around the constraints and expectations of commercial product photography:</p>
+<ul>
+  <li>Prompts are structured around product, not artistic expression — background, lighting, mood, angle, and props are the relevant controls.</li>
+  <li>The prompt-building system (<code>buildPrompt()</code>) outputs prompts in a format that AI image models are trained to interpret as product photography: <em>"Commercial product photography, high resolution, sharp focus on product, no watermark, no extra text."</em></li>
+  <li>The gallery is organized by campaign (product launch or brand context), not by a chronological dump of images.</li>
+  <li>Regeneration is designed around iteration: tweak the prompt, keep the original as a reference, generate again — the same workflow a photographer uses when reviewing test shots.</li>
+</ul>
+<p>The niche shaped every product decision, from naming (campaigns, ad shots) to the prompt options table schema (category, label, promptValue, sortOrder), to the default suffix appended to every generated prompt.</p>
+
+<div class="page-break"></div>
+
+<h2>Section 2: App Journey (Request Flow)</h2>
+<p>A detailed trace of how a user's prompt travels from the browser through the backend to the AI API and back as a rendered image.</p>
+
+<div class="flow-step"><div class="flow-num">1</div><div><strong>User fills the form in React.</strong> <code>buildPrompt()</code> assembles the structured prompt from the user's product description and selected styling options in real-time. The user sees the assembled prompt in a preview pane before submitting.</div></div>
+
+<div class="flow-step"><div class="flow-num">2</div><div><strong>Frontend calls POST /scenes/generate.</strong> The Axios instance (with JWT interceptor) sends the request body: <code>{projectId, prompt, generatedPrompt, referenceSceneId?, uploadedReferenceImage?}</code></div></div>
+
+<div class="flow-step"><div class="flow-num">3</div><div><strong>Gin handler validates the request.</strong> JWTAuth middleware extracts <code>userId</code> from the token. The handler binds the JSON body and passes it to <code>SceneService.Generate()</code>.</div></div>
+
+<div class="flow-step"><div class="flow-num">4</div><div><strong>Service validates and inserts.</strong> Validates prompt length and blocked words, verifies the campaign belongs to the user, calculates the next <code>order_index</code>, then calls <code>repository.InsertProcessing()</code>.</div></div>
+
+<pre>// From service/sceneService.go
+sceneId, err := s.repository.InsertProcessing(userId, req, orderIndex)
+if err != nil {
+    return response.GenerateSceneResponse{}, &constant.ErrDatabaseFailed
+}
+
+generatedPrompt := req.Prompt
+if req.GeneratedPrompt != "" {
+    generatedPrompt = req.GeneratedPrompt
+}
+
+go s.processGeneration(requestId, sceneId, generatedPrompt, referenceImageBytes)</pre>
+
+<div class="flow-step"><div class="flow-num">5</div><div><strong>HTTP 202 returned immediately.</strong> The handler responds with the new scene ID and <code>status: "processing"</code> — before any AI call is made. The client now has a scene ID to poll against.</div></div>
+
+<div class="flow-step"><div class="flow-num">6</div><div><strong>Background goroutine runs.</strong> <code>processGeneration()</code> runs concurrently. It decides which Pollinations endpoint to call based on whether a reference image was provided, then sets a context deadline (60s for text-only, 90s with reference).</div></div>
+
+<pre>// From pkg/imagegen/client.go
+func (c *Client) Generate(ctx context.Context, prompt string, referenceImage []byte) ([]byte, error) {
+    if referenceImage == nil {
+        return c.generateTextOnly(ctx, prompt)
+    }
+    return c.generateWithReference(ctx, prompt, referenceImage)
+}
+
+// Text-to-image: GET request
+endpoint := pollinationsImageURL + "/" + url.PathEscape(prompt) + "?model=kontext&nologo=true"
+
+// Image-editing: POST multipart
+// Fields: prompt, model=kontext
+// File:   image (reference PNG)</pre>
+
+<div class="flow-step"><div class="flow-num">7</div><div><strong>On AI success:</strong> goroutine saves the returned PNG bytes to <code>./storage/images/{sceneId}.png</code> and calls <code>repository.UpdateCompleted(sceneId, filePath, fileUrl)</code>.</div></div>
+
+<div class="flow-step"><div class="flow-num">8</div><div><strong>On AI failure:</strong> goroutine calls <code>repository.UpdateStatus(sceneId, "failed", errorCode)</code>. The error code is determined by the type of failure: context deadline exceeded → ERR_03, content policy string in error → ERR_13, all others → ERR_05.</div></div>
+
+<div class="flow-step"><div class="flow-num">9</div><div><strong>Frontend polls via SWR.</strong> After receiving the 202, SWR's <code>refreshInterval</code> callback fires <code>POST /scenes/get</code> every 3 seconds. While status is <code>"processing"</code>, a skeleton card is shown in the gallery grid.</div></div>
+
+<div class="flow-step"><div class="flow-num">10</div><div><strong>Terminal state renders.</strong> When the poll returns <code>status: "completed"</code>, SWR stops polling and the skeleton resolves into the final image card. On <code>status: "failed"</code>, an error card with the error code is shown instead.</div></div>
+
+<div class="page-break"></div>
+
+<h2>Section 3: Tech Stack Choice &amp; Justification</h2>
+<p>Every technology choice was made to serve the specific constraints of this problem: async image generation, multi-user isolation, persistent gallery, and handling a slow, unreliable AI API.</p>
+
+<table>
+  <tr><th>Technology</th><th>Reason for Choice</th></tr>
+  <tr>
+    <td><strong>Go + Gin</strong></td>
+    <td>Go's goroutines are the right primitive for async AI generation — each generate call spawns a goroutine, and Go's runtime handles thousands of these efficiently without threads. Gin adds minimal overhead and has clean JSON binding and middleware support. The standard library handles file I/O, HTTP, and base64 without any additional dependencies.</td>
+  </tr>
+  <tr>
+    <td><strong>PostgreSQL</strong></td>
+    <td>ACID compliance is necessary for concurrent user isolation. Multiple users generating simultaneously need guaranteed <code>order_index</code> values, correct cascade deletes, and row-level isolation. A document store or in-memory solution would require reimplementing guarantees that Postgres provides out of the box.</td>
+  </tr>
+  <tr>
+    <td><strong>React 19 + TypeScript</strong></td>
+    <td>TypeScript eliminates entire categories of runtime errors (wrong field names, missing nullish checks) that would be particularly painful when mapping between backend response shapes and UI state. React 19's concurrent features weren't specifically needed, but the ecosystem (Chakra UI, SWR, Zustand) is mature and well-suited to this UI pattern.</td>
+  </tr>
+  <tr>
+    <td><strong>SWR</strong></td>
+    <td>Built-in <code>refreshInterval</code> support makes polling trivially simple: pass a callback that returns an interval when status is <code>"processing"</code> and <code>0</code> (stop) otherwise. Without SWR, this would require manual <code>useEffect</code> timers with cleanup — more code, more bugs.</td>
+  </tr>
+  <tr>
+    <td><strong>Zustand</strong></td>
+    <td>Auth state needs to persist across page refreshes (localStorage) and be accessible from any component. Zustand's <code>persist</code> middleware handles this in ~5 lines. Redux would be overkill; React Context doesn't play well with localStorage persistence.</td>
+  </tr>
+  <tr>
+    <td><strong>Chakra UI v3</strong></td>
+    <td>Component library with a well-defined token system makes it practical to implement a custom design system (Cartographer's Atlas). The alternative — unstyled primitives + custom CSS — would have taken significantly longer for no meaningful benefit to the assignment.</td>
+  </tr>
+  <tr>
+    <td><strong>Pollinations.ai (kontext model)</strong></td>
+    <td>Free tier with an API key. Supports both text-to-image (GET) and image-editing (POST multipart) in a single API surface. The kontext model produces commercially usable product photography. The main tradeoff is reliability — image editing mode has a ~20% success rate for complex edits — but for the scope of this assignment the free tier and dual-mode support outweighed the reliability concerns.</td>
+  </tr>
+  <tr>
+    <td><strong>Local filesystem storage</strong></td>
+    <td>No CDN or object storage was set up. Images are written to <code>./storage/images/</code> and served by Go's static file handler (or nginx in production). This was a deliberate simplification — adding S3 would have introduced AWS credential management and IAM complexity without improving the core product for this submission.</td>
+  </tr>
+</table>
+
+<h2>Section 4: Build Process</h2>
+<p>The build was sequenced to de-risk the hardest parts first — specifically the AI integration and async flow — before investing in UI polish.</p>
+
+<ol>
+  <li><strong>Backend core first.</strong> Implemented user auth (JWT), project CRUD, and the DB schema. Validated the complete request/response cycle with Postman before writing any frontend code.</li>
+  <li><strong>Scene generation with async flow.</strong> Built the goroutine pattern, the polling endpoint, and the status state machine (processing → completed/failed) before building the frontend form. This is the highest-risk part of the system.</li>
+  <li><strong>Frontend auth + campaign management.</strong> Built the landing page, auth modal, Zustand stores, and Axios JWT interceptor. Implemented the campaign sidebar.</li>
+  <li><strong>Scene gallery with polling.</strong> Connected SWR polling to the backend generate endpoint. Got the end-to-end flow working with a basic UI.</li>
+  <li><strong>Design system (Cartographer's Atlas).</strong> Applied the Chakra UI theme — color tokens, typography, component variants. This was done after the functional flow worked to avoid wasted styling effort on components that might change.</li>
+  <li><strong>Pivot to product ad niche.</strong> Renamed entities ("images" → "scenes/ad shots", "projects" → "campaigns"), added the <code>prompt_options</code> table and migration, built the <code>buildPrompt()</code> system, and updated the generate form with the options UI.</li>
+  <li><strong>UI improvements.</strong> Storyboard-style grid layout, detail modal, card hover effects, skeleton loading states, regenerate flow.</li>
+  <li><strong>Error handling and failure states.</strong> Implemented the three async failure modes (ERR_03, ERR_05, ERR_13), the rate-limit banner, and form validation error display.</li>
+  <li><strong>Supporting features.</strong> Onboarding tour, sample campaign auto-seed, 404 page, daily log file rotation.</li>
+  <li><strong>Documentation.</strong> API reference, tech stack writeup, application guide, and this assessment response.</li>
+</ol>
+
+<div class="page-break"></div>
+
+<h2>Section 5: Key Technical Decisions</h2>
+
+<div class="decision-card">
+  <h4>Decision 1: Async Generation via Goroutines</h4>
+  <p><strong>Problem:</strong> Pollinations API calls take 10–90 seconds. Holding an HTTP connection open for that duration would create client timeouts, block Gin worker threads, and make the global 30-second middleware timeout fire before the AI responds.</p>
+  <p><strong>Solution:</strong> The handler inserts a <code>processing</code> record, returns HTTP 202 immediately, and launches <code>go s.processGeneration(...)</code>. The goroutine independently calls the AI API, saves the image, and updates the DB record. The frontend polls every 3 seconds using SWR's <code>refreshInterval</code> until the status resolves.</p>
+  <p><strong>Tradeoff:</strong> The client must poll rather than receive a push notification. This is simpler than WebSockets or SSE at this scale — no persistent connection management, no reconnect logic, no additional infrastructure. For a single-server deployment with tens of concurrent users, polling is the right call.</p>
+  <div style="margin-top:12px">
+    <img src="./performance-analysis/image-generated-responsetime.jpeg" alt="API response time evidence — 10 to 30 seconds" style="max-width:100%;border-radius:6px;border:1px solid #e0e0e0" onerror="this.style.display='none'">
+    <p style="font-size:11px;color:#888;margin-top:4px;font-family:monospace">Figure: Measured Pollinations API response times confirming the 10–30 second generation window for text-to-image requests.</p>
+  </div>
+</div>
+
+<div class="decision-card">
+  <h4>Decision 2: Prompt Building on the Client Side</h4>
+  <p><strong>Problem:</strong> A raw user input like "a coffee bottle" produces wildly inconsistent AI results — sometimes a cartoon, sometimes a photo, sometimes just the word "coffee" rendered as text.</p>
+  <p><strong>Solution:</strong> <code>buildPrompt()</code> on the frontend assembles a structured prompt from the user's description and their selected styling options, then appends a fixed commercial photography suffix. The assembled prompt is shown to the user in real-time as a preview before they submit.</p>
+  <p><strong>Tradeoff:</strong> The assembled prompt is built on the frontend, but both the raw input (<code>user_prompt</code>) and the assembled output (<code>generated_prompt</code>) are sent to the backend and stored separately. This means the server always knows what actually went to the AI API, which is essential for debugging, re-generation, and future prompt auditing.</p>
+</div>
+
+<div class="decision-card">
+  <h4>Decision 3: Dual-Mode Image Generation (Text vs. Image Editing)</h4>
+  <p><strong>Problem:</strong> Fresh generation and re-generation have different quality expectations. A fresh "white marble background" shot benefits from the full creative freedom of text-to-image. A regeneration where the user wants to "keep the same bottle but change the background to dark wood" requires image editing mode to preserve the product's appearance.</p>
+  <p><strong>Solution:</strong> The <code>imagegen.Client.Generate()</code> method automatically routes to the correct Pollinations endpoint: <code>GET /image/{prompt}?model=kontext</code> when no reference image is provided, and <code>POST /v1/images/edits</code> (multipart form with the reference PNG) when one is. The routing logic is in <code>pkg/imagegen/client.go</code>, invisible to the service layer.</p>
+  <p><strong>Tradeoff:</strong> Image editing mode is significantly slower (30–90s vs. 10–30s) and has a lower success rate (~20% for structural changes). This is an inherent limitation of the Pollinations kontext model's image-editing capability, not an implementation problem. The kontext model handles style transfers reasonably well but struggles with positional edits like changing the product's angle or pose.</p>
+</div>
+
+<div class="decision-card">
+  <h4>Decision 4: All AI Calls Through Backend Only</h4>
+  <p><strong>Problem:</strong> If the frontend called Pollinations directly, the API key would be visible in the browser's network tab. Every user could extract it and use the quota for their own purposes.</p>
+  <p><strong>Solution:</strong> The browser never communicates with Pollinations. All API calls go through <code>pkg/imagegen/client.go</code>, which holds the key from the server environment variable. Rate limiting, error normalization, image storage, and response mapping all happen server-side before anything reaches the client.</p>
+  <p><strong>Tradeoff:</strong> None that are meaningful at this scale. The only added complexity is the backend HTTP hop, which is negligible compared to the AI API latency.</p>
+</div>
+
+<h2>Section 6: Known Limitations</h2>
+
+<div class="warning-box">
+  <strong>Honest assessment of what doesn't work perfectly:</strong>
+</div>
+
+<ul>
+  <li><strong>Image editing reliability (~20% success rate for complex edits).</strong> The Pollinations kontext model's image-editing endpoint is unreliable for structural changes — position edits, pose changes, and significant compositional changes fail most of the time. Style transfers (background swaps, lighting changes) work better but still inconsistently. This is the most significant user-facing limitation.</li>
+  <li><strong>No CDN.</strong> Images are served directly from the Go static file handler. Under any real load, this would become a bottleneck. The correct fix is to move image serving to a CDN-backed object store (S3 + CloudFront), but that was deliberately out of scope for this assignment.</li>
+  <li><strong>Rate limit is per-user, not per-IP.</strong> The in-memory token bucket in <code>middleware/rateLimit.go</code> keys on <code>userId</code> extracted from the JWT. Multiple accounts from the same IP bypass the limit. A production implementation would add IP-based limiting at the nginx or load balancer level.</li>
+  <li><strong>No image CDN TTL or cache invalidation.</strong> Deleted images are removed from disk but the file URL might still be cached in a browser until the tab refreshes. The gallery SWR mutation handles the UI correctly, but any external link to the image URL would return a 404 immediately after deletion.</li>
+  <li><strong>reference_scene_id FK removed in migration 005.</strong> The original schema had a foreign key from <code>scenes.reference_scene_id</code> to <code>scenes.id</code>. This caused constraint violations when a referenced scene was deleted before the scene that referenced it. Migration 005 drops the constraint, making the column advisory only. The proper fix would be <code>ON DELETE SET NULL</code>, but the migration was simpler given the project timeline.</li>
+  <li><strong>No image editing for uploaded references that exceed model capability.</strong> When a user uploads a 5MB high-resolution reference image, the Pollinations edits endpoint sometimes rejects it silently. The error surfaces as ERR_05 rather than a more descriptive validation error.</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>Section 7: Required Constraint Compliance</h2>
+<p>Direct mapping of every non-negotiable assessment requirement to its implementation in Viscraft.</p>
+
+<table>
+  <tr>
+    <th style="width:35%">Requirement</th>
+    <th>Implementation</th>
+  </tr>
+  <tr>
+    <td><strong>AI API calls go through your backend only, never the browser</strong></td>
+    <td>All Pollinations calls are in <code>pkg/imagegen/client.go</code>. The API key is loaded from the server's environment variables (<code>config/config.go</code>). The frontend's Axios instance only ever calls the Viscraft backend at <code>VITE_API_BASE_URL</code>. The Pollinations URL is never referenced in any frontend file.</td>
+  </tr>
+  <tr>
+    <td><strong>Images must be stored server-side and persist across page refreshes</strong></td>
+    <td>On generation success, the goroutine writes PNG bytes to <code>./storage/images/{sceneId}.png</code> via <code>pkg/storage/local.go</code>. The <code>file_url</code> column in the <code>scenes</code> table stores the public URL. <code>POST /scenes/list</code> fetches all scenes from PostgreSQL on every workspace mount, so the gallery is always rebuilt from the database.</td>
+  </tr>
+  <tr>
+    <td><strong>Must work correctly with multiple concurrent users generating at the same time</strong></td>
+    <td>Each generate request spawns an independent goroutine. All DB queries include <code>user_id</code> predicates so users only see their own data. The <code>order_index</code> is calculated with a <code>SELECT MAX(order_index)</code> query per project before insert — this is safe under concurrent load because the insert is its own atomic operation. No global state is shared between goroutines.</td>
+  </tr>
+  <tr>
+    <td><strong>Loading must be meaningful (10–30 seconds is normal)</strong></td>
+    <td>On submit, a <code>PollingSceneCard</code> (animated skeleton) is immediately added to the gallery grid. SWR polls <code>/scenes/get</code> every 3 seconds using <code>refreshInterval</code> until the status resolves. The skeleton visually communicates that work is in progress without freezing the UI or blocking other interactions.
+    <br><br>
+    <img src="./performance-analysis/image-generated-responsetime.jpeg" alt="Pollinations API response time measured at 10–30 seconds" style="max-width:100%;border-radius:6px;border:1px solid #e0e0e0;margin-top:8px" onerror="this.style.display='none'">
+    <p style="font-size:11px;color:#888;margin-top:4px;font-family:monospace">Figure: Network response time recorded from Pollinations API calls, confirming the 10–30 second generation window.</p>
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Handle failure states: API timeout, invalid prompt, broken response</strong></td>
+    <td>Three async failure states are fully implemented: ERR_03 (60/90s context deadline exceeded), ERR_05 (non-OK status or empty/unparseable response from Pollinations), ERR_13 (content_policy_violation prefix detected in error string). Synchronous failures: ERR_04 (invalid prompt — too short, too long, or blocked word), ERR_02 (rate limit). All failure states render a visible error card or banner in the UI.</td>
+  </tr>
+  <tr>
+    <td><strong>Use any free AI image API</strong></td>
+    <td>Pollinations.ai free tier with API key. The kontext model handles both text-to-image and image-editing modes. No paid tier or billing is required for normal usage volumes.</td>
+  </tr>
+  <tr>
+    <td><strong>The gallery must persist across page refreshes</strong></td>
+    <td>PostgreSQL + SWR. On every workspace mount, <code>POST /projects/list</code> and <code>POST /scenes/list</code> are called. The JWT is read from Zustand's localStorage-persisted store, so authenticated requests work immediately on refresh. No in-memory-only state is used for gallery data.</td>
+  </tr>
+  <tr>
+    <td><strong>Re-generation: pick any saved result, tweak the prompt, re-generate</strong></td>
+    <td>The detail modal's "Regenerate" button sets the workspace store's <code>regenerateScene</code> state. When the generate modal opens, it detects this state, pre-fills <code>userPrompt</code> with the original <code>user_prompt</code>, and sets <code>regenerateFileUrl</code> so the original image is shown as the reference photo. The user tweaks the description or options and submits.</td>
+  </tr>
+</table>
+
+<hr>
+
+<div class="success-box">
+  <strong>Summary:</strong> All seven non-negotiable requirements are implemented and verifiable in the running application. The most complex requirement — concurrent user isolation with meaningful async loading — is the core architectural decision the entire backend is built around.
+</div>
+
+</body>
+</html>

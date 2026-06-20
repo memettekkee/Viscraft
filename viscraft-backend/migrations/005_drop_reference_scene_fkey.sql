@@ -1,0 +1,1 @@
+ALTER TABLE scenes DROP CONSTRAINT IF EXISTS scenes_reference_scene_id_fkey;

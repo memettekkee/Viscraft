@@ -21,4 +21,5 @@ var (
 	ErrInternalServer    = AppError{Code: "ERR_10", Message: "Internal server error", HttpStatus: 500}
 	ErrValidationFailed  = AppError{Code: "ERR_11", Message: "Validation failed", HttpStatus: 422}
 	ErrDuplicateResource = AppError{Code: "ERR_12", Message: "Resource already exists", HttpStatus: 409}
+	ErrContentPolicy     = AppError{Code: "ERR_13", Message: "Prompt rejected by content policy", HttpStatus: 422}
 )

@@ -7,9 +7,14 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8089',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      // Proxy static image files to avoid CORS issues in development
+      '/storage': {
+        target: 'http://localhost:8089',
+        changeOrigin: true,
       },
     },
   },

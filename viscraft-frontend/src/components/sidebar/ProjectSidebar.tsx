@@ -4,6 +4,7 @@ import useSWR from 'swr'
 import { useSWRConfig } from 'swr'
 import { postFetcher } from '../../helper/fetcher'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+import { useAuthStore } from '../../store/authStore'
 import { toRomanNumeral } from '../../pages/workspace/utils/romanNumeral'
 import { deleteProject } from '../../service/project'
 import { showToast } from '../CustomToast'
@@ -13,18 +14,12 @@ import { ProjectModal } from '../../pages/workspace/components/ProjectModal'
 import type { AxiosError } from 'axios'
 import type { ApiResponse, Project } from '../../types'
 
-/**
- * ProjectSidebar — displays user's project list with roman numeral indices.
- *
- * Desktop (≥768px): Vertical list of projects with roman numeral prefixes.
- * Mobile (<768px): Horizontal scrollable chip bar.
- *
- * Validates: Requirements 4.1, 4.4, 4.5, 4.6, 14.4, 13.1, 13.2
- */
 export function ProjectSidebar() {
   const { mutate } = useSWRConfig()
   const activeProjectId = useWorkspaceStore((s) => s.activeProjectId)
   const setActiveProject = useWorkspaceStore((s) => s.setActiveProject)
+  const clearAuth = useAuthStore((s) => s.clearAuth)
+  const user = useAuthStore((s) => s.user)
 
   const { data, isLoading } = useSWR<ApiResponse<Project[]>>(
     ['/projects/list'],
@@ -33,7 +28,6 @@ export function ProjectSidebar() {
 
   const projects = data?.data ?? []
 
-  // Modal states
   const [projectModalOpen, setProjectModalOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -44,9 +38,7 @@ export function ProjectSidebar() {
     try {
       await deleteProject({ id: deleteTarget.id })
       await mutate(['/projects/list'])
-      // If the deleted project was active, clear selection
       if (activeProjectId === deleteTarget.id) {
-        // Select next available project or leave as null
         const remaining = projects.filter((p) => p.id !== deleteTarget.id)
         if (remaining.length > 0) {
           setActiveProject(remaining[0].id)
@@ -55,7 +47,8 @@ export function ProjectSidebar() {
     } catch (err: unknown) {
       const axiosError = err as AxiosError<ApiResponse>
       const code = axiosError.response?.data?.errorCode
-      const message = code ? (ERROR_MESSAGES[code] ?? 'An error occurred') : ERROR_MESSAGES.NETWORK_ERROR
+      const backendMessage = axiosError.response?.data?.message
+      const message = backendMessage ?? (code ? (ERROR_MESSAGES[code] ?? 'An error occurred') : ERROR_MESSAGES.NETWORK_ERROR)
       showToast({ type: 'error', title: message })
     } finally {
       setIsDeleting(false)
@@ -65,13 +58,13 @@ export function ProjectSidebar() {
 
   return (
     <>
-      {/* Desktop layout: vertical list */}
       <VStack
         display={{ base: 'none', md: 'flex' }}
         align="stretch"
         gap="1"
         p="3"
         height="100%"
+        data-tour="sidebar"
       >
         <Text
           fontFamily="display"
@@ -82,7 +75,7 @@ export function ProjectSidebar() {
           mb="2"
           px="2"
         >
-          Regions
+          Campaigns
         </Text>
 
         {isLoading && (
@@ -159,8 +152,33 @@ export function ProjectSidebar() {
           onClick={() => setProjectModalOpen(true)}
           minH="44px"
         >
-          + New Region
+          + New Campaign
         </Button>
+
+        {/* User info + Logout */}
+        <Box mt="auto" pt="4" borderTop="1px solid" borderColor="border.accent">
+          {user && (
+            <Text fontFamily="body" fontSize="xs" color="warmgray" px="2" mb="2" truncate>
+              {user.email}
+            </Text>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            width="100%"
+            fontFamily="body"
+            fontSize="sm"
+            color="oxblood"
+            minH="44px"
+            _hover={{ bg: 'rgba(139, 0, 0, 0.08)' }}
+            onClick={() => {
+              clearAuth()
+              window.location.href = '/'
+            }}
+          >
+            Log out
+          </Button>
+        </Box>
       </VStack>
 
       {/* Mobile layout: horizontal scrollable chip bar */}
@@ -189,6 +207,7 @@ export function ProjectSidebar() {
               minH="44px"
               display="flex"
               alignItems="center"
+              gap="1"
               borderRadius="full"
               bg={isActive ? 'amber' : 'transparent'}
               borderWidth="1px"
@@ -207,6 +226,29 @@ export function ProjectSidebar() {
               >
                 {toRomanNumeral(index + 1)}. {project.name}
               </Text>
+
+              {/* Delete button shown on active chip */}
+              {isActive && (
+                <Box
+                  as="span"
+                  ml="1"
+                  px="1"
+                  fontFamily="body"
+                  fontSize="xs"
+                  fontWeight="bold"
+                  color="white"
+                  lineHeight="1"
+                  borderRadius="full"
+                  _hover={{ bg: 'rgba(255,255,255,0.2)' }}
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation()
+                    setDeleteTarget(project)
+                  }}
+                  aria-label={`Delete project ${project.name}`}
+                >
+                  ✕
+                </Box>
+              )}
             </Box>
           )
         })}
@@ -243,8 +285,8 @@ export function ProjectSidebar() {
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Delete Region"
-        message={`Are you sure you want to delete "${deleteTarget?.name ?? ''}"? All images in this region will be permanently removed.`}
+        title="Delete Campaign"
+        message={`Are you sure you want to delete "${deleteTarget?.name ?? ''}"? All ad shots in this campaign will be permanently removed.`}
         confirmLabel="Delete"
         isLoading={isDeleting}
       />

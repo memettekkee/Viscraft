@@ -4,35 +4,67 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/google/uuid"
 )
 
 // LocalStorage manages image files on the local filesystem.
 type LocalStorage struct {
-	basePath string
+	basePath          string
+	tempBasePath      string
+	publicBaseUrl     string
+	publicTempBaseUrl string
 }
 
-// NewLocalStorage creates a new LocalStorage instance with the given base directory path.
-func NewLocalStorage(basePath string) *LocalStorage {
-	return &LocalStorage{basePath: basePath}
+func NewLocalStorage(basePath, tempBasePath, publicBaseUrl, publicTempBaseUrl string) *LocalStorage {
+	return &LocalStorage{
+		basePath:          basePath,
+		tempBasePath:      tempBasePath,
+		publicBaseUrl:     publicBaseUrl,
+		publicTempBaseUrl: publicTempBaseUrl,
+	}
 }
 
-// Save writes image data to the filesystem as basePath/imageId.png and returns the full file path.
-func (ls *LocalStorage) Save(imageId string, data []byte) (string, error) {
-	filePath := ls.GetPath(imageId)
+func (ls *LocalStorage) Save(id string, data []byte) (filePath string, fileUrl string, err error) {
+	filePath = ls.GetPath(id)
 
 	if err := os.MkdirAll(ls.basePath, 0755); err != nil {
-		return "", fmt.Errorf("failed to create storage directory: %w", err)
+		return "", "", fmt.Errorf("failed to create storage directory: %w", err)
 	}
 
 	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return "", fmt.Errorf("failed to write image file: %w", err)
+		return "", "", fmt.Errorf("failed to write image file: %w", err)
 	}
 
-	return filePath, nil
+	fileUrl = ls.publicBaseUrl + "/" + id + ".png"
+	return filePath, fileUrl, nil
 }
 
-// Delete removes the image file from the filesystem. Returns nil if the file
-// does not exist (idempotent). Only returns an error for unexpected failures.
+func (ls *LocalStorage) SaveTemp(data []byte) (filePath string, fileUrl string, err error) {
+	id := uuid.New().String()
+	filename := id + ".png"
+	filePath = filepath.Join(ls.tempBasePath, filename)
+
+	if err := os.MkdirAll(ls.tempBasePath, 0755); err != nil {
+		return "", "", fmt.Errorf("failed to create temp storage directory: %w", err)
+	}
+
+	if err := os.WriteFile(filePath, data, 0644); err != nil {
+		return "", "", fmt.Errorf("failed to write temp image file: %w", err)
+	}
+
+	fileUrl = ls.publicTempBaseUrl + "/" + filename
+	return filePath, fileUrl, nil
+}
+
+func (ls *LocalStorage) DeleteTemp(filePath string) error {
+	err := os.Remove(filePath)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to delete temp file: %w", err)
+	}
+	return nil
+}
+
 func (ls *LocalStorage) Delete(imageId string) error {
 	filePath := ls.GetPath(imageId)
 
@@ -44,7 +76,6 @@ func (ls *LocalStorage) Delete(imageId string) error {
 	return nil
 }
 
-// GetPath constructs and returns the file path for the given image ID.
 func (ls *LocalStorage) GetPath(imageId string) string {
 	return filepath.Join(ls.basePath, imageId+".png")
 }

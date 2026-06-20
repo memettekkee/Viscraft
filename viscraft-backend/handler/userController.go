@@ -12,18 +12,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// UserController handles HTTP requests for user-related operations.
-// It implements the router.Controller interface.
 type UserController struct {
 	userService *service.UserService
 }
 
-// NewUserController creates a new UserController with the given UserService dependency.
 func NewUserController(userService *service.UserService) *UserController {
 	return &UserController{userService: userService}
 }
 
-// Routes returns the route definitions for user endpoints.
 func (uc *UserController) Routes() []router.Route {
 	return []router.Route{
 		{Path: "/users/create", Handler: uc.Create, Protected: false},
@@ -33,7 +29,6 @@ func (uc *UserController) Routes() []router.Route {
 	}
 }
 
-// Create handles user registration requests.
 func (uc *UserController) Create(c *gin.Context) {
 	requestId := c.GetString("requestId")
 
@@ -59,12 +54,10 @@ func (uc *UserController) Create(c *gin.Context) {
 		return
 	}
 
-	// Override requestId to ensure server-generated value is used
 	res.RequestId = requestId
 	c.JSON(http.StatusCreated, res)
 }
 
-// Login handles user authentication requests.
 func (uc *UserController) Login(c *gin.Context) {
 	requestId := c.GetString("requestId")
 
@@ -90,12 +83,10 @@ func (uc *UserController) Login(c *gin.Context) {
 		return
 	}
 
-	// Override requestId to ensure server-generated value is used
 	res.RequestId = requestId
 	c.JSON(http.StatusOK, res)
 }
 
-// Get handles requests for the authenticated user's profile.
 func (uc *UserController) Get(c *gin.Context) {
 	requestId := c.GetString("requestId")
 	userId := c.GetString("userId")
@@ -111,12 +102,10 @@ func (uc *UserController) Get(c *gin.Context) {
 		return
 	}
 
-	// Override requestId to ensure server-generated value is used
 	res.RequestId = requestId
 	c.JSON(http.StatusOK, res)
 }
 
-// Delete handles user account deletion requests.
 func (uc *UserController) Delete(c *gin.Context) {
 	requestId := c.GetString("requestId")
 	userId := c.GetString("userId")
@@ -132,7 +121,6 @@ func (uc *UserController) Delete(c *gin.Context) {
 		return
 	}
 
-	// Override requestId to ensure server-generated value is used
 	res.RequestId = requestId
 	c.JSON(http.StatusOK, res)
 }

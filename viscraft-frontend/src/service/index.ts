@@ -1,3 +1,4 @@
 // Barrel file for service layer
 export * from './auth'
-export * from './image'
+export * from './scene'
+export * from './project'

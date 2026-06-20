@@ -12,19 +12,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ProjectController handles HTTP requests for project-related operations.
-// It implements the router.Controller interface.
 type ProjectController struct {
 	projectService *service.ProjectService
 }
 
-// NewProjectController creates a new ProjectController with the given ProjectService dependency.
 func NewProjectController(projectService *service.ProjectService) *ProjectController {
 	return &ProjectController{projectService: projectService}
 }
 
-// Routes returns the route definitions for project endpoints.
-// All project routes are protected (require JWT authentication).
 func (pc *ProjectController) Routes() []router.Route {
 	return []router.Route{
 		{Path: "/projects/create", Handler: pc.Create, Protected: true},
@@ -34,7 +29,6 @@ func (pc *ProjectController) Routes() []router.Route {
 	}
 }
 
-// Create handles project creation requests.
 func (pc *ProjectController) Create(c *gin.Context) {
 	requestId := c.GetString("requestId")
 	userId := c.GetString("userId")

@@ -6,8 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Controller is the interface that all route-providing controllers must implement.
-// Each controller returns a slice of Route definitions to be registered on the engine.
 type Controller interface {
 	Routes() []Route
 }

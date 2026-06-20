@@ -15,7 +15,7 @@ declare global {
 }
 
 const api = axios.create({
-  baseURL: window.__VISCRAFT_CONFIG__?.API_BASE_URL || 'http://localhost:8080',
+  baseURL: window.__VISCRAFT_CONFIG__?.API_BASE_URL || 'http://localhost:8089',
   headers: { 'Content-Type': 'application/json' },
 })
 

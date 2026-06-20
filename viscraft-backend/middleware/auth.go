@@ -11,10 +11,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// JWTAuth returns a Gin middleware that validates Bearer tokens from the
-// Authorization header. It checks the token signature against the provided
-// secret, verifies expiry, and extracts the userId claim into the Gin context.
-// Any failure results in HTTP 401 with error code ERR_09.
 func JWTAuth(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")

@@ -1,15 +1,6 @@
 import { Button, HStack, Text } from '@chakra-ui/react'
 import { ERROR_MESSAGES } from '../../constants'
 
-/**
- * Inline error banner displaying a mapped error message with optional retry and dismiss actions.
- *
- * Uses the ERROR_MESSAGES constant to look up display strings by error code,
- * ensuring raw backend messages are never shown to users.
- *
- * Validates: Requirements 12.1, 12.2, 12.6
- */
-
 export interface ErrorBannerProps {
   errorCode: string
   onRetry?: () => void

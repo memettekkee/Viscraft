@@ -3,29 +3,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogBody,
-  DialogCloseTrigger,
   DialogBackdrop,
+  DialogPositioner,
+  IconButton,
+  Box,
 } from '@chakra-ui/react'
 import type { ReactNode } from 'react'
-
-/**
- * Reusable modal component wrapping Chakra UI v3 Dialog.
- *
- * Responsive behavior:
- *  - Mobile (base): renders as a full-screen overlay
- *  - Desktop (md+): renders as a centered modal
- *
- * Theme: uses the Cartographer's Atlas dialog slot recipe —
- * parchment background, amber border, ink text, Fraunces display font for title.
- *
- * Validates: Requirements 13.4, 13.5
- */
 
 export interface ReusableModalProps {
   isOpen: boolean
   onClose: () => void
   title: string
-  size?: { base: string; md: string }
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   children: ReactNode
 }
 
@@ -33,10 +22,15 @@ export function ReusableModal({
   isOpen,
   onClose,
   title,
-  size,
+  size = 'md',
   children,
 }: ReusableModalProps) {
-  const _size = size ?? { base: 'full', md: 'lg' }
+  const widthMap = {
+    sm: '24rem',
+    md: '32rem',
+    lg: '40rem',
+    xl: '48rem',
+  }
 
   return (
     <DialogRoot
@@ -45,23 +39,43 @@ export function ReusableModal({
         if (!open) onClose()
       }}
       placement="center"
-      size={_size.md as 'sm' | 'md' | 'lg' | 'xl' | 'full'}
+      size={size}
     >
-      <DialogBackdrop />
-      <DialogContent
-        width={{ base: '100vw', md: 'auto' }}
-        height={{ base: '100vh', md: 'auto' }}
-        maxHeight={{ base: '100vh', md: '85vh' }}
-        maxWidth={{ md: _size.md === 'lg' ? '32rem' : undefined }}
-        borderRadius={{ base: '0', md: 'md' }}
-        overflow="auto"
-      >
-        <DialogHeader fontFamily="display" fontSize="xl">
-          {title}
-        </DialogHeader>
-        <DialogBody>{children}</DialogBody>
-        <DialogCloseTrigger aria-label="Close dialog" />
-      </DialogContent>
+      <DialogBackdrop
+        bg="blackAlpha.700"
+        backdropFilter="blur(4px)"
+      />
+      <DialogPositioner>
+        <DialogContent
+          width={{ base: '100vw', md: widthMap[size] }}
+          height={{ base: '100vh', md: 'auto' }}
+          maxHeight={{ base: '100vh', md: '85vh' }}
+          borderRadius={{ base: '0', md: 'lg' }}
+          overflow="auto"
+          position="relative"
+        >
+          {/* Close button - always visible */}
+          <Box position="absolute" top="3" right="3" zIndex="10">
+            <IconButton
+              aria-label="Close dialog"
+              onClick={onClose}
+              variant="ghost"
+              size="sm"
+              minW="36px"
+              minH="36px"
+              borderRadius="full"
+              _hover={{ bg: 'blackAlpha.100' }}
+            >
+              ✕
+            </IconButton>
+          </Box>
+
+          <DialogHeader fontFamily="display" fontSize="xl" pr="12">
+            {title}
+          </DialogHeader>
+          <DialogBody pb="6">{children}</DialogBody>
+        </DialogContent>
+      </DialogPositioner>
     </DialogRoot>
   )
 }

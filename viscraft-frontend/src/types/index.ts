@@ -1,7 +1,5 @@
 // Enums
-export type Genre = 'fantasy' | 'sci-fi' | 'post-apocalyptic' | 'steampunk' | 'horror'
-export type AssetType = 'character' | 'location' | 'item' | 'creature'
-export type Mood = 'dark' | 'epic' | 'mysterious' | 'whimsical'
+export type ProductCategory = 'general' | 'food' | 'beverage' | 'cosmetics' | 'fashion' | 'electronics' | 'home'
 
 // Base response shape — every backend response includes these
 export interface ApiResponse<T = unknown> {
@@ -26,18 +24,20 @@ export interface Project {
   id: string
   name: string
   description?: string
+  productCategory: string
+  visualStyle: string
   createdAt: string
 }
 
-// Image
-export interface Image {
+// Scene
+export interface Scene {
   id: string
+  projectId: string
+  orderIndex: number
+  prompt: string
+  generated_prompt: string
   status: 'processing' | 'completed' | 'failed'
   fileUrl?: string
-  prompt: string
-  genre: Genre
-  assetType: AssetType
-  mood: Mood
   errorCode?: string
   createdAt: string
 }

@@ -2,30 +2,65 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"os"
+	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 )
 
-// Info logs an informational message with the requestId and optional key-value fields.
+var (
+	once      sync.Once
+	logWriter io.Writer
+)
+
+// init sets up the logger to write to both stdout and a daily log file.
+func initLogger() {
+	logDir := "logs"
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		log.SetOutput(os.Stdout)
+		return
+	}
+
+	today := time.Now().Format("2006-01-02")
+	logPath := filepath.Join(logDir, "app-"+today+".log")
+
+	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.SetOutput(os.Stdout)
+		return
+	}
+
+	logWriter = io.MultiWriter(os.Stdout, f)
+	log.SetOutput(logWriter)
+	log.SetFlags(0) 
+}
+
+func setup() {
+	once.Do(initLogger)
+}
+
+func timestamp() string {
+	return time.Now().Format("2006/01/02 15:04:05")
+}
+
 func Info(requestId string, message string, fields ...interface{}) {
-	log.Printf("[INFO] requestId=%s %s%s", requestId, message, formatFields(fields))
+	setup()
+	log.Printf("%s [INFO] requestId=%s %s%s", timestamp(), requestId, message, formatFields(fields))
 }
 
-// Warn logs a warning message with the requestId and optional key-value fields.
 func Warn(requestId string, message string, fields ...interface{}) {
-	log.Printf("[WARN] requestId=%s %s%s", requestId, message, formatFields(fields))
+	setup()
+	log.Printf("%s [WARN] requestId=%s %s%s", timestamp(), requestId, message, formatFields(fields))
 }
 
-// Error logs an error message with the requestId and optional key-value fields.
-// If the last field is an error, it is appended as "error=<value>".
 func Error(requestId string, message string, fields ...interface{}) {
-	log.Printf("[ERROR] requestId=%s %s%s", requestId, message, formatFields(fields))
+	setup()
+	log.Printf("%s [ERROR] requestId=%s %s%s", timestamp(), requestId, message, formatFields(fields))
 }
 
-// formatFields converts variadic fields into a formatted string.
-// It supports two patterns:
-//   - Key-value pairs: logger.Info(id, "msg", "key1", val1, "key2", val2)
-//   - Single error: logger.Error(id, "msg", err)
 func formatFields(fields []interface{}) string {
 	if len(fields) == 0 {
 		return ""
@@ -33,7 +68,6 @@ func formatFields(fields []interface{}) string {
 
 	var sb strings.Builder
 
-	// If there's a single field and it's an error, format it directly.
 	if len(fields) == 1 {
 		if err, ok := fields[0].(error); ok {
 			sb.WriteString(" error=")
@@ -45,7 +79,6 @@ func formatFields(fields []interface{}) string {
 		return sb.String()
 	}
 
-	// Process as key-value pairs.
 	for i := 0; i < len(fields)-1; i += 2 {
 		key := fmt.Sprintf("%v", fields[i])
 		val := fmt.Sprintf("%v", fields[i+1])
@@ -55,7 +88,6 @@ func formatFields(fields []interface{}) string {
 		sb.WriteString(val)
 	}
 
-	// If there's an odd trailing field (likely an error), append it.
 	if len(fields)%2 != 0 {
 		last := fields[len(fields)-1]
 		if err, ok := last.(error); ok {

@@ -70,8 +70,9 @@ export function fileToBase64(file: File): Promise<string> {
  *  - Rejects if fetch fails or image cannot be converted
  */
 export async function imageUrlToBase64(url: string): Promise<string> {
-  const baseUrl = window.__VISCRAFT_CONFIG__?.API_BASE_URL || 'http://localhost:8080'
-  const fullUrl = `${baseUrl}${url}`
+  // Use window.location.origin so the request stays same-origin in dev (via Vite proxy)
+  // and works correctly in production (nginx handles /storage/ directly).
+  const fullUrl = `${window.location.origin}${url}`
   const response = await fetch(fullUrl)
 
   if (!response.ok) {

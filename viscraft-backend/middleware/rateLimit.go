@@ -11,9 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RateLimit returns a Gin middleware that enforces a per-user request rate limit.
-// It allows at most maxRequests requests within the given window duration per user.
-// Requests exceeding the limit receive HTTP 429 with error code ERR_02.
 func RateLimit(maxRequests int, window time.Duration) gin.HandlerFunc {
 	var (
 		limiter = make(map[string][]time.Time)

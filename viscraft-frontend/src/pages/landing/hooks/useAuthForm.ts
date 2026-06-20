@@ -21,12 +21,6 @@ function validatePassword(password: string): string | null {
   return null
 }
 
-/**
- * Custom hook for auth form state, validation, and submission logic.
- * Extracts all non-UI concerns from the AuthModal component.
- *
- * Validates: Requirements 1.2, 1.4, 1.5, 2.2, 2.4, 2.5
- */
 export function useAuthForm(onSuccess: () => void) {
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -92,7 +86,8 @@ export function useAuthForm(onSuccess: () => void) {
 
       if (axiosError.response?.data?.errorCode) {
         const code = axiosError.response.data.errorCode
-        setApiError(ERROR_MESSAGES[code] ?? 'An error occurred')
+        const backendMessage = axiosError.response.data.message
+        setApiError(backendMessage ?? (ERROR_MESSAGES[code] ?? 'An error occurred'))
       } else {
         setApiError(ERROR_MESSAGES.NETWORK_ERROR)
       }

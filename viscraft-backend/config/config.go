@@ -13,46 +13,51 @@ import (
 
 // Config holds all environment configuration for the application.
 type Config struct {
-	AppPort      string
-	AppEnv       string
-	DBHost       string
-	DBPort       string
-	DBName       string
-	DBUser       string
-	DBPassword   string
-	GeminiAPIKey string
-	GeminiModel  string
-	StoragePath  string
-	JWTSecret    string
-	JWTExpiry    time.Duration
+	AppPort              string
+	AppEnv               string
+	DBHost               string
+	DBPort               string
+	DBName               string
+	DBUser               string
+	DBPassword           string
+	PollinationsAPIKey   string
+	StoragePath          string
+	StoragePublicURL     string
+	StorageTempPublicURL string
+	JWTSecret            string
+	JWTExpiry            time.Duration
 }
 
-// Load reads environment variables from .env (if present) and returns a validated Config.
-// It fails with a descriptive error if required fields are missing or invalid.
 func Load() *Config {
-	// Load .env file if it exists; ignore error if file is absent
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		AppPort:      getEnv("APP_PORT", "8080"),
-		AppEnv:       getEnv("APP_ENV", "development"),
-		DBHost:       getEnv("DB_HOST", "localhost"),
-		DBPort:       getEnv("DB_PORT", "5432"),
-		DBName:       getEnv("DB_NAME", "viscraft"),
-		DBUser:       getEnv("DB_USER", "postgres"),
-		DBPassword:   getEnv("DB_PASSWORD", ""),
-		GeminiAPIKey: os.Getenv("GEMINI_API_KEY"),
-		GeminiModel:  getEnv("GEMINI_MODEL", "gemini-2.0-flash-preview-image-generation"),
-		StoragePath:  os.Getenv("STORAGE_PATH"),
-		JWTSecret:    os.Getenv("JWT_SECRET"),
+		AppPort:              getEnv("APP_PORT", "8080"),
+		AppEnv:               getEnv("APP_ENV", "development"),
+		DBHost:               getEnv("DB_HOST", "localhost"),
+		DBPort:               getEnv("DB_PORT", "5432"),
+		DBName:               getEnv("DB_NAME", "viscraft"),
+		DBUser:               getEnv("DB_USER", "postgres"),
+		DBPassword:           getEnv("DB_PASSWORD", ""),
+		PollinationsAPIKey:   os.Getenv("POLLINATIONS_API_KEY"),
+		StoragePath:          os.Getenv("STORAGE_PATH"),
+		StoragePublicURL:     os.Getenv("STORAGE_PUBLIC_URL"),
+		StorageTempPublicURL: os.Getenv("STORAGE_TEMP_PUBLIC_URL"),
+		JWTSecret:            os.Getenv("JWT_SECRET"),
 	}
 
 	// Validate required fields
-	if cfg.GeminiAPIKey == "" {
-		log.Fatal("GEMINI_API_KEY environment variable is required")
+	if cfg.PollinationsAPIKey == "" {
+		log.Fatal("POLLINATIONS_API_KEY environment variable is required")
 	}
 	if cfg.StoragePath == "" {
 		log.Fatal("STORAGE_PATH environment variable is required")
+	}
+	if cfg.StoragePublicURL == "" {
+		log.Fatal("STORAGE_PUBLIC_URL environment variable is required")
+	}
+	if cfg.StorageTempPublicURL == "" {
+		log.Fatal("STORAGE_TEMP_PUBLIC_URL environment variable is required")
 	}
 	if cfg.JWTSecret == "" {
 		log.Fatal("JWT_SECRET environment variable is required")
@@ -84,7 +89,6 @@ func buildDSN(cfg *Config) string {
 }
 
 // InitDB creates a database connection pool using the provided config.
-// It verifies connectivity with a ping and configures pool settings.
 func InitDB(cfg *Config) *sql.DB {
 	dsn := buildDSN(cfg)
 

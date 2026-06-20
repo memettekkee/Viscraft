@@ -1,14 +1,6 @@
 import { Box, Text } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
 
-/**
- * Animated skeleton placeholder for an ImageCard in "processing" state.
- * Displays a parchment-colored card with a CSS shimmer animation and a
- * configurable label (defaults to "Mapping...").
- *
- * Validates: Requirements 8.1
- */
-
 const shimmer = keyframes`
   0% {
     background-position: -200% 0;
@@ -36,7 +28,6 @@ export function ImageCardSkeleton({ label = "Mapping..." }: ImageCardSkeletonPro
       alignItems="center"
       justifyContent="center"
     >
-      {/* Shimmer overlay */}
       <Box
         position="absolute"
         inset="0"
@@ -47,8 +38,6 @@ export function ImageCardSkeleton({ label = "Mapping..." }: ImageCardSkeletonPro
           animation: `${shimmer} 1.8s ease-in-out infinite`,
         }}
       />
-
-      {/* Label */}
       <Text
         fontFamily="mono"
         fontSize="sm"

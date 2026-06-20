@@ -14,24 +14,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// ImageFinder defines the minimal interface for finding images by user ID.
-// Used during user deletion to locate files for filesystem cleanup.
 type ImageFinder interface {
 	FindImagesByUserId(userId string) ([]ImageRecord, error)
 }
 
-// ImageRecord holds the minimal fields needed for cleanup during user deletion.
 type ImageRecord struct {
 	Id string
 }
 
-// StorageDeleter defines the minimal interface for deleting image files from storage.
 type StorageDeleter interface {
 	Delete(imageId string) error
 }
 
-// UserService handles user-related business logic including registration,
-// authentication, and account deletion.
 type UserService struct {
 	userRepo  *repository.UserRepository
 	imageFinder ImageFinder
@@ -40,9 +34,6 @@ type UserService struct {
 	jwtExpiry time.Duration
 }
 
-// NewUserService creates a new UserService with the required dependencies.
-// imageFinder and storage can be nil if filesystem cleanup is not needed (they are
-// checked before use during deletion).
 func NewUserService(
 	userRepo *repository.UserRepository,
 	imageFinder ImageFinder,
@@ -59,30 +50,24 @@ func NewUserService(
 	}
 }
 
-// CreateUser validates the input, creates a new user, and returns a JWT token.
 func (s *UserService) CreateUser(requestId string, req request.CreateUserRequest) (response.CreateUserResponse, *constant.AppError) {
-	// Validate email format: must contain exactly one "@" with non-empty local and domain parts
 	if err := validateEmail(req.Email); err != nil {
 		logger.Warn(requestId, "email validation failed", "email", req.Email)
 		return response.CreateUserResponse{}, err
 	}
 
-	// Validate email length
 	if len(req.Email) > 255 {
 		logger.Warn(requestId, "email exceeds 255 characters")
 		return response.CreateUserResponse{}, &constant.ErrValidationFailed
 	}
 
-	// Validate password length: 8-72 characters
 	if len(req.Password) < 8 || len(req.Password) > 72 {
 		logger.Warn(requestId, "password length invalid")
 		return response.CreateUserResponse{}, &constant.ErrValidationFailed
 	}
 
-	// Insert user via repository (handles bcrypt hashing)
 	user, err := s.userRepo.Insert(req.Email, req.Password, req.Name)
 	if err != nil {
-		// Check for duplicate email (PostgreSQL unique violation)
 		if isDuplicateKeyError(err) {
 			logger.Warn(requestId, "duplicate email", "email", req.Email)
 			return response.CreateUserResponse{}, &constant.ErrDuplicateResource
@@ -91,7 +76,6 @@ func (s *UserService) CreateUser(requestId string, req request.CreateUserRequest
 		return response.CreateUserResponse{}, &constant.ErrDatabaseFailed
 	}
 
-	// Generate JWT token
 	token, tokenErr := s.generateJWT(user.Id)
 	if tokenErr != nil {
 		logger.Error(requestId, "failed to generate JWT", tokenErr)
@@ -116,24 +100,18 @@ func (s *UserService) CreateUser(requestId string, req request.CreateUserRequest
 	}, nil
 }
 
-// Login authenticates a user by email and password, returning a JWT token on success.
 func (s *UserService) Login(requestId string, req request.LoginRequest) (response.LoginResponse, *constant.AppError) {
-	// Find user by email
 	user, err := s.userRepo.FindByEmail(req.Email)
 	if err != nil {
-		// Don't reveal whether email or password was wrong (requirement 2.2)
 		logger.Warn(requestId, "login failed - user not found", "email", req.Email)
 		return response.LoginResponse{}, &constant.ErrUnauthorized
 	}
 
-	// Compare bcrypt hash with provided password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		// Don't reveal whether email or password was wrong (requirement 2.2)
 		logger.Warn(requestId, "login failed - password mismatch", "userId", user.Id)
 		return response.LoginResponse{}, &constant.ErrUnauthorized
 	}
 
-	// Generate JWT token
 	token, tokenErr := s.generateJWT(user.Id)
 	if tokenErr != nil {
 		logger.Error(requestId, "failed to generate JWT", tokenErr)
@@ -158,7 +136,6 @@ func (s *UserService) Login(requestId string, req request.LoginRequest) (respons
 	}, nil
 }
 
-// GetUser retrieves the authenticated user's profile data by their ID.
 func (s *UserService) GetUser(requestId string, userId string) (response.GetUserResponse, *constant.AppError) {
 	user, err := s.userRepo.FindById(userId)
 	if err != nil {
@@ -183,19 +160,14 @@ func (s *UserService) GetUser(requestId string, userId string) (response.GetUser
 	}, nil
 }
 
-// DeleteUser removes a user account and triggers filesystem cleanup for all
-// associated images. The userId parameter comes from the JWT context (self-deletion only).
 func (s *UserService) DeleteUser(requestId string, userId string) (response.DeleteUserResponse, *constant.AppError) {
-	// Perform filesystem cleanup if dependencies are available
 	if s.imageFinder != nil && s.storage != nil {
 		images, err := s.imageFinder.FindImagesByUserId(userId)
 		if err != nil {
 			logger.Error(requestId, "failed to find user images for cleanup", err)
-			// Continue with deletion even if image lookup fails
 		} else {
 			for _, img := range images {
 				if err := s.storage.Delete(img.Id); err != nil {
-					// Log failure and continue (requirement 3.4)
 					logger.Warn(requestId, "failed to delete image file", "imageId", img.Id, "error", err.Error())
 				}
 			}
@@ -203,7 +175,6 @@ func (s *UserService) DeleteUser(requestId string, userId string) (response.Dele
 		}
 	}
 
-	// Delete user from database (cascade handles DB cleanup)
 	if err := s.userRepo.Delete(userId); err != nil {
 		logger.Error(requestId, "failed to delete user", err)
 		return response.DeleteUserResponse{}, &constant.ErrDatabaseFailed
@@ -220,7 +191,6 @@ func (s *UserService) DeleteUser(requestId string, userId string) (response.Dele
 	}, nil
 }
 
-// generateJWT creates a signed JWT token with userId and expiry claims.
 func (s *UserService) generateJWT(userId string) (string, error) {
 	claims := jwt.MapClaims{
 		"userId": userId,
@@ -231,8 +201,6 @@ func (s *UserService) generateJWT(userId string) (string, error) {
 	return token.SignedString([]byte(s.jwtSecret))
 }
 
-// validateEmail checks that the email contains exactly one "@" with non-empty
-// local and domain parts.
 func validateEmail(email string) *constant.AppError {
 	if email == "" {
 		return &constant.ErrValidationFailed
@@ -243,7 +211,6 @@ func validateEmail(email string) *constant.AppError {
 		return &constant.ErrValidationFailed
 	}
 
-	// Check for exactly one "@"
 	if strings.Count(email, "@") != 1 {
 		return &constant.ErrValidationFailed
 	}
@@ -251,7 +218,6 @@ func validateEmail(email string) *constant.AppError {
 	local := email[:atIndex]
 	domain := email[atIndex+1:]
 
-	// Both local and domain parts must be non-empty
 	if local == "" || domain == "" {
 		return &constant.ErrValidationFailed
 	}
@@ -259,7 +225,6 @@ func validateEmail(email string) *constant.AppError {
 	return nil
 }
 
-// isDuplicateKeyError checks if a database error is a PostgreSQL unique violation.
 func isDuplicateKeyError(err error) bool {
 	return strings.Contains(err.Error(), "duplicate key") ||
 		strings.Contains(err.Error(), "unique constraint")

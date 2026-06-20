@@ -1,15 +1,6 @@
 import { Button, HStack, Text, VStack } from '@chakra-ui/react'
 import { ReusableModal } from '../ReusableModal'
 
-/**
- * Confirmation dialog for destructive actions (project deletion, image deletion).
- *
- * Wraps ReusableModal with confirm/cancel action buttons and an optional loading state
- * on the confirm button to prevent double-submission.
- *
- * Validates: Requirements 4.5, 11.1
- */
-
 export interface ConfirmationModalProps {
   isOpen: boolean
   onClose: () => void
@@ -30,23 +21,25 @@ export function ConfirmationModal({
   isLoading = false,
 }: ConfirmationModalProps) {
   return (
-    <ReusableModal isOpen={isOpen} onClose={onClose} title={title} size={{ base: 'full', md: 'md' }}>
-      <VStack gap="6" align="stretch">
-        <Text fontFamily="body" color="ink" fontSize="md">
+    <ReusableModal isOpen={isOpen} onClose={onClose} title={title} size="sm">
+      <VStack gap="4" align="stretch">
+        <Text fontFamily="body" color="ink" fontSize="sm">
           {message}
         </Text>
         <HStack gap="3" justify="flex-end">
           <Button
             variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={isLoading}
             minW="44px"
-            minH="44px"
+            minH="36px"
           >
             Cancel
           </Button>
           <Button
             variant="solid"
+            size="sm"
             bg="oxblood"
             color="white"
             _hover={{ opacity: 0.9 }}
@@ -54,7 +47,7 @@ export function ConfirmationModal({
             loading={isLoading}
             disabled={isLoading}
             minW="44px"
-            minH="44px"
+            minH="36px"
           >
             {confirmLabel}
           </Button>

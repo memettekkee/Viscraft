@@ -2,13 +2,6 @@ import { Box, Button, Flex, Input, Text } from '@chakra-ui/react'
 import { ReusableModal } from '../../../components/ReusableModal'
 import { useAuthForm } from '../hooks/useAuthForm'
 
-/**
- * AuthModal with login/register tabs.
- * UI-only component — logic lives in useAuthForm hook.
- *
- * Validates: Requirements 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 2.5
- */
-
 interface AuthModalProps {
   isOpen: boolean
   onClose: () => void

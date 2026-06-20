@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Viscraft — Application Documentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px 32px; line-height: 1.7; color: #1a1a1a; background: #fff; font-size: 14px; }
+  @media print { body { padding: 20px; } .page-break { page-break-before: always; } }
+  h1 { font-size: 28px; font-weight: 700; border-bottom: 3px solid #C9762C; padding-bottom: 12px; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 36px 0 12px; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; color: #C9762C; }
+  h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; color: #333; }
+  h4 { font-size: 14px; font-weight: 600; margin: 16px 0 6px; }
+  p { margin-bottom: 12px; }
+  pre, code { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  pre { background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 16px; overflow-x: auto; margin: 12px 0; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: #f6f8fa; font-weight: 600; padding: 10px 12px; border: 1px solid #d0d0d0; text-align: left; }
+  td { padding: 9px 12px; border: 1px solid #e0e0e0; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .info-box { background: #fff7ed; border-left: 4px solid #C9762C; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .warning-box { background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .success-box { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .header-meta { color: #666; font-size: 13px; margin-bottom: 32px; }
+  ul, ol { padding-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  img { max-width: 100%; border: 1px solid #e0e0e0; border-radius: 6px; margin: 12px 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 16px 0; }
+  .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 32px 0; }
+  .step { margin-bottom: 28px; }
+  .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .step-num { background: #C9762C; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .step-title { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+  .screenshot-placeholder { background: #f6f8fa; border: 2px dashed #d0d0d0; border-radius: 6px; padding: 20px; text-align: center; color: #999; font-size: 12px; font-family: 'JetBrains Mono', monospace; margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<h1>Viscraft — Application Documentation</h1>
+<p class="header-meta">Complete user guide, feature reference, prompt system, error handling, and local setup instructions.</p>
+
+<h2>1. Introduction</h2>
+<p>Viscraft is an AI-powered product ad photography generator. It is designed for small business owners, marketers, and entrepreneurs who need professional-looking product photos without the cost of a photographer or studio.</p>
+<p>The core workflow is simple: describe your product, choose a visual style (background, lighting, mood, camera angle, and props), preview the assembled prompt, and generate a studio-quality ad shot. The AI handles the rest. Results are saved in a persistent gallery organized by campaign, and any shot can be regenerated with a tweaked prompt at any time.</p>
+
+<div class="two-col">
+  <div class="card">
+    <h4>Primary Users</h4>
+    <ul style="margin-bottom:0">
+      <li>Small business owners launching products</li>
+      <li>E-commerce sellers needing product imagery</li>
+      <li>Marketers building ad creatives</li>
+      <li>Entrepreneurs testing product concepts</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>What It Is Not</h4>
+    <ul style="margin-bottom:0">
+      <li>A generic AI art generator</li>
+      <li>A photo editor or retouching tool</li>
+      <li>A social media scheduler</li>
+      <li>A video or animation tool</li>
+    </ul>
+  </div>
+</div>
+
+<h2>2. Feature List</h2>
+<ul>
+  <li><strong>User authentication</strong> — Register and login with email + password. JWT tokens persisted in localStorage for session continuity across page refreshes.</li>
+  <li><strong>Campaign management</strong> — Create, list, and delete campaigns per user. Each campaign has a name, optional description, product category, and visual style.</li>
+  <li><strong>AI-powered ad shot generation</strong> — Generate product ad shots using structured prompts via Pollinations.ai (kontext model).</li>
+  <li><strong>Styling options system</strong> — 5 categories of visual styling options (background, lighting, mood, angle, props) fetched from the database. 20+ options available.</li>
+  <li><strong>Generated prompt preview</strong> — The assembled AI prompt is shown to the user in real-time as they fill the form, before submitting.</li>
+  <li><strong>Reference photo upload</strong> — Users can upload their own JPEG/PNG/WebP reference image (max 5MB) to guide generation in image-editing mode.</li>
+  <li><strong>Ad shot gallery</strong> — All generated ad shots are displayed in a grid per campaign, ordered by creation sequence. Persists across page refreshes.</li>
+  <li><strong>Regenerate flow</strong> — Clicking "Regenerate" on any ad shot re-opens the generate form with the original prompt pre-filled and the original image shown as a reference.</li>
+  <li><strong>Detail modal</strong> — Clicking an ad shot opens a full-size image view with actions (regenerate, delete, download).</li>
+  <li><strong>Async generation with real-time polling</strong> — A skeleton card appears immediately on submit; SWR polls every 3 seconds until the image is ready.</li>
+  <li><strong>Failure states</strong> — ERR_03 (timeout), ERR_05 (bad AI response), ERR_13 (content policy) are all rendered visibly in the gallery as error cards.</li>
+  <li><strong>Rate limiting</strong> — Maximum 5 generate requests per minute per user, enforced server-side.</li>
+  <li><strong>Auto-seed sample campaign</strong> — New users get a sample campaign created automatically so the workspace is not empty on first login.</li>
+  <li><strong>Onboarding tour</strong> — A 3-step guided tour walks first-time users through the key UI areas.</li>
+  <li><strong>404 page</strong> — Custom not-found page for unrecognized routes.</li>
+  <li><strong>Daily log files</strong> — Backend writes structured logs to <code>./logs/app-YYYY-MM-DD.log</code> alongside stdout output.</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>3. User Flow</h2>
+<p>The following steps walk through the complete user journey from first visit to generating and managing ad shots.</p>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">1</div><div class="step-title">Landing Page</div></div>
+  <p>The user arrives at the Viscraft landing page. It introduces the product value proposition and provides Register and Login buttons to enter the workspace.</p>
+  <img src="./apps-documentation/landing-page.png" alt="Landing page screenshot" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+  <div class="screenshot-placeholder" style="display:none">./apps-documentation/landing-page.png</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">2</div><div class="step-title">Registration</div></div>
+  <p>New users create an account by entering their email, a password (min 8 characters), and an optional display name. On success, a JWT token is issued and the user is redirected to the workspace.</p>
+  <img src="./apps-documentation/register-modal.png" alt="Registration modal" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+  <div class="screenshot-placeholder" style="display:none">./apps-documentation/register-modal.png</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">3</div><div class="step-title">Login</div></div>
+  <p>Returning users log in with their email and password. The token is persisted to localStorage via Zustand's <code>authStore</code>, so the session survives page refreshes.</p>
+  <img src="./apps-documentation/login-modal.png" alt="Login modal" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+  <div class="screenshot-placeholder" style="display:none">./apps-documentation/login-modal.png</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">4</div><div class="step-title">Workspace</div></div>
+  <p>The main workspace consists of a sidebar listing all campaigns and a main area showing the ad shot gallery for the selected campaign. A sample campaign is auto-created for new users so the workspace is never empty on first login.</p>
+  <img src="./apps-documentation/workspace-page.png" alt="Workspace page" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+  <div class="screenshot-placeholder" style="display:none">./apps-documentation/workspace-page.png</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">5</div><div class="step-title">Create Campaign</div></div>
+  <p>Users create a new campaign by entering a name and optionally a description, product category, and visual style. Campaigns act as folders for organizing ad shots by product or project.</p>
+  <img src="./apps-documentation/create-campaign-modal.png" alt="Create campaign modal" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+  <div class="screenshot-placeholder" style="display:none">./apps-documentation/create-campaign-modal.png</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">6</div><div class="step-title">Generate Ad Shot</div></div>
+  <p>The generate form lets users describe their product in plain text, then select styling options (background, lighting, mood, camera angle, props). The assembled prompt is shown in a live preview pane before submitting. Users may also upload a reference photo for image-editing mode.</p>
+  <img src="./apps-documentation/generate-modal.png" alt="Generate modal" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+  <div class="screenshot-placeholder" style="display:none">./apps-documentation/generate-modal.png</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">7</div><div class="step-title">Detail View</div></div>
+  <p>Clicking any ad shot in the gallery opens a full-size detail modal. From here the user can view the original and generated prompts, download the image, regenerate with a new prompt, or delete the shot.</p>
+  <img src="./apps-documentation/detail-card-modal.png" alt="Detail card modal" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+  <div class="screenshot-placeholder" style="display:none">./apps-documentation/detail-card-modal.png</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">8</div><div class="step-title">Regenerate</div></div>
+  <p>The regenerate flow re-opens the generate form with the original prompt pre-filled. The original image is automatically shown as a reference photo in image-editing mode, allowing the user to nudge the result without starting from scratch.</p>
+  <img src="./apps-documentation/regenerate-modal.png" alt="Regenerate modal" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+  <div class="screenshot-placeholder" style="display:none">./apps-documentation/regenerate-modal.png</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">9</div><div class="step-title">Delete Confirmation</div></div>
+  <p>Deleting an ad shot requires explicit confirmation through a modal to prevent accidental data loss. Campaign deletion follows the same pattern and also cascades to all contained ad shots.</p>
+  <img src="./apps-documentation/delete-confirmation-modal.png" alt="Delete confirmation modal" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+  <div class="screenshot-placeholder" style="display:none">./apps-documentation/delete-confirmation-modal.png</div>
+</div>
+
+<div class="step">
+  <div class="step-header"><div class="step-num">10</div><div class="step-title">Onboarding Tour</div></div>
+  <p>First-time users see a 3-step guided tour that highlights the campaign sidebar, generate form, and prompt preview — the three core interaction areas of the workspace.</p>
+  <div class="two-col" style="gap:12px">
+    <div>
+      <img src="./apps-documentation/apps-tour-1.png" alt="Tour step 1" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+      <div class="screenshot-placeholder" style="display:none">apps-tour-1.png</div>
+    </div>
+    <div>
+      <img src="./apps-documentation/apps-tour-2.png" alt="Tour step 2" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+      <div class="screenshot-placeholder" style="display:none">apps-tour-2.png</div>
+    </div>
+  </div>
+  <img src="./apps-documentation/apps-tour-3.png" alt="Tour step 3" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+  <div class="screenshot-placeholder" style="display:none">apps-tour-3.png</div>
+</div>
+
+<div class="page-break"></div>
+
+<h2>4. Prompt Building System</h2>
+<p>Raw product descriptions typed by users ("A bottle of cold brew coffee") produce inconsistent AI results on their own. The <code>buildPrompt()</code> function on the frontend assembles a structured prompt that reliably yields commercial-quality product photography.</p>
+
+<h3>How buildPrompt() Works</h3>
+<p>The function combines the user's product description with the <code>promptValue</code> of each selected styling option, separated into logical sections, and appends a fixed commercial photography suffix.</p>
+
+<h4>Example Input</h4>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Product Description</td><td>A bottle of cold brew coffee</td></tr>
+  <tr><td>Background</td><td>White Marble → <code>white marble surface with subtle veining</code></td></tr>
+  <tr><td>Lighting</td><td>Natural Window → <code>soft natural window light from left</code></td></tr>
+  <tr><td>Mood</td><td>Fresh &amp; Clean → <code>fresh clean aesthetic, bright and airy</code></td></tr>
+  <tr><td>Angle</td><td>45 Degrees → <code>45-degree angle shot</code></td></tr>
+</table>
+
+<h4>Assembled Generated Prompt</h4>
+<pre>Product: A bottle of cold brew coffee. white marble surface with subtle veining.
+soft natural window light from left. fresh clean aesthetic, bright and airy.
+45-degree angle shot. Commercial product photography, high resolution,
+sharp focus on product, no watermark, no extra text.</pre>
+
+<h3>Storage</h3>
+<p>Both the raw user input (<code>user_prompt</code>) and the assembled prompt (<code>generated_prompt</code>) are stored in the database. The <code>generated_prompt</code> is what actually gets sent to the Pollinations API. This separation preserves the user's original intent for the regenerate flow while giving the AI enough context to produce quality results.</p>
+
+<h3>Prompt Validation</h3>
+<ul>
+  <li>Minimum length: 3 characters</li>
+  <li>Maximum length: 300 characters</li>
+  <li>Blocked words: <code>nude</code>, <code>explicit</code>, <code>nsfw</code>, <code>gore</code> (case-insensitive)</li>
+  <li>Validation runs server-side in <code>sceneService.validatePrompt()</code> — the frontend character counter is informational only</li>
+</ul>
+
+<h2>5. Error Handling</h2>
+<p>The application handles three categories of visible failure states, each rendered differently in the UI.</p>
+
+<h3>Generation Failure States (Async)</h3>
+<p>When a generation fails asynchronously, the skeleton polling card resolves into an error card in the gallery. The error card displays the failure reason and an option to retry.</p>
+<table>
+  <tr><th>Error Code</th><th>Cause</th><th>UI Message</th></tr>
+  <tr><td>ERR_03</td><td>Pollinations API did not respond within 60–90 seconds</td><td>"Generation timed out. The AI took too long to respond."</td></tr>
+  <tr><td>ERR_05</td><td>Pollinations returned an empty or unparseable response</td><td>"Generation failed. The AI returned an unexpected response."</td></tr>
+  <tr><td>ERR_13</td><td>Prompt was rejected by the AI content safety filter</td><td>"Content policy violation. Please revise your prompt."</td></tr>
+</table>
+
+<h3>Form Validation Errors (Synchronous)</h3>
+<p>Validation errors from the server (ERR_04, ERR_11) are shown inline in the generate modal above the form fields. The submit button is also disabled client-side if the prompt is empty.</p>
+
+<h3>Rate Limit (HTTP 429)</h3>
+<p>When the rate limit is hit (ERR_02), the modal displays a dismissable error banner: "Too many requests. Please wait a moment before generating again."</p>
+
+<h3>Network / Auth Errors</h3>
+<p>The Axios JWT interceptor handles 401 responses globally — on token expiry, the user is logged out and redirected to the landing page. Generic network errors are shown via the <code>ErrorBanner</code> component at the top of the workspace.</p>
+
+<div class="page-break"></div>
+
+<h2>6. Local Setup Instructions</h2>
+
+<div class="info-box">
+  <strong>Prerequisites:</strong> Go 1.21+, Node.js 18+, PostgreSQL (local or remote)
+</div>
+
+<h3>Backend Setup</h3>
+<pre>cd viscraft-backend
+
+# Copy and fill environment variables
+cp .env.example .env</pre>
+
+<p>Edit <code>.env</code> with your values:</p>
+<table>
+  <tr><th>Variable</th><th>Description</th></tr>
+  <tr><td>DB_HOST</td><td>PostgreSQL host (e.g. localhost)</td></tr>
+  <tr><td>DB_PORT</td><td>PostgreSQL port (default: 5432)</td></tr>
+  <tr><td>DB_NAME</td><td>Database name</td></tr>
+  <tr><td>DB_USER</td><td>Database user</td></tr>
+  <tr><td>DB_PASSWORD</td><td>Database password</td></tr>
+  <tr><td>JWT_SECRET</td><td>Random secret string for signing tokens</td></tr>
+  <tr><td>POLLINATIONS_API_KEY</td><td>Your Pollinations.ai API key</td></tr>
+  <tr><td>APP_PORT</td><td>Server port (default: 8089)</td></tr>
+  <tr><td>STORAGE_PATH</td><td>Path for storing generated images (default: ./storage/images)</td></tr>
+  <tr><td>STORAGE_PUBLIC_URL</td><td>Public URL prefix for image files (e.g. http://localhost:8089/storage/images)</td></tr>
+</table>
+
+<pre># Install Go dependencies
+go mod download
+
+# Run database migrations in order (001 through 005)
+psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/001_init.sql
+psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/002_add_used_reference_image.sql
+psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/003_scenes.sql
+psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/004_product_ad_pivot.sql
+psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/005_drop_reference_scene_fkey.sql
+
+# Start the server
+go run main.go
+# Server starts on http://localhost:8089</pre>
+
+<h3>Frontend Setup</h3>
+<pre>cd viscraft-frontend
+
+# Install Node dependencies
+npm install
+
+# Copy and fill environment variables
+cp .env.example .env</pre>
+
+<p>Edit <code>.env</code>:</p>
+<table>
+  <tr><th>Variable</th><th>Value</th></tr>
+  <tr><td>VITE_API_BASE_URL</td><td>http://localhost:8089</td></tr>
+</table>
+
+<pre># Start the development server
+npm run dev
+# App runs on http://localhost:5173</pre>
+
+<div class="success-box">
+  <strong>Running in under 15 minutes:</strong> The only hard prerequisites are a running PostgreSQL instance and a Pollinations.ai API key (free tier available at pollinations.ai). Once the migrations are applied and both servers are running, the app is fully functional at <code>http://localhost:5173</code>.
+</div>
+
+</body>
+</html>

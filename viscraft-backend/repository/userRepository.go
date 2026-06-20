@@ -8,7 +8,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// User represents a row in the users table.
 type User struct {
 	Id        string
 	Email     string
@@ -17,18 +16,14 @@ type User struct {
 	CreatedAt time.Time
 }
 
-// UserRepository handles database operations for the users table.
 type UserRepository struct {
 	db *sql.DB
 }
 
-// NewUserRepository creates a new UserRepository with the given database connection.
 func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-// Insert creates a new user with a bcrypt-hashed password and returns the created user.
-// The provided password is hashed before storage — raw passwords are never persisted.
 func (r *UserRepository) Insert(email, password, name string) (*User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -55,8 +50,6 @@ func (r *UserRepository) Insert(email, password, name string) (*User, error) {
 	}, nil
 }
 
-// FindByEmail retrieves a user by their email address.
-// Returns the user with the hashed password for login comparison.
 func (r *UserRepository) FindByEmail(email string) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(
@@ -69,8 +62,6 @@ func (r *UserRepository) FindByEmail(email string) (*User, error) {
 	return user, nil
 }
 
-// FindById retrieves a user by their unique ID.
-// Used for auth context lookup after JWT validation.
 func (r *UserRepository) FindById(id string) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(
@@ -83,8 +74,6 @@ func (r *UserRepository) FindById(id string) (*User, error) {
 	return user, nil
 }
 
-// Delete removes a user by their ID. Cascade delete rules in the database
-// schema handle removal of associated projects and images.
 func (r *UserRepository) Delete(userId string) error {
 	_, err := r.db.Exec(`DELETE FROM users WHERE id = $1`, userId)
 	return err

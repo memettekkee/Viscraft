@@ -35,6 +35,25 @@ export function SceneDetailModal({ onDelete, onRegenerate }: SceneDetailModalPro
     closeSceneDetail()
   }
 
+  async function handleDownload() {
+    if (!imageUrl) return
+    try {
+      const response = await fetch(imageUrl)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `scene-${sceneNumber}-${selectedScene!.id}.png`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      // fallback: open in new tab
+      window.open(imageUrl, '_blank')
+    }
+  }
+
   return (
     <ReusableModal
       isOpen={selectedScene !== null}
@@ -94,6 +113,16 @@ export function SceneDetailModal({ onDelete, onRegenerate }: SceneDetailModalPro
 
         {/* Actions */}
         <HStack gap="3" justify="flex-end" pt="1" borderTop="1px solid" borderColor="rgba(201,118,44,0.2)">
+          {imageUrl && (
+            <Button
+              variant="solid"
+              size="sm"
+              minH="36px"
+              onClick={handleDownload}
+            >
+              Download
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

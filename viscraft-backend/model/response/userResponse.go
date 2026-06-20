@@ -1,10 +1,11 @@
 package response
 
 type UserData struct {
-	Id        string `json:"id"`
-	Email     string `json:"email"`
-	Name      string `json:"name"`
-	CreatedAt string `json:"createdAt"`
+	Id            string `json:"id"`
+	Email         string `json:"email"`
+	Name          string `json:"name"`
+	CreatedAt     string `json:"createdAt"`
+	TourCompleted bool   `json:"tourCompleted"`
 }
 
 type CreateUserResponse struct {
@@ -25,5 +26,9 @@ type GetUserResponse struct {
 }
 
 type DeleteUserResponse struct {
+	BaseResponse
+}
+
+type CompleteTourResponse struct {
 	BaseResponse
 }

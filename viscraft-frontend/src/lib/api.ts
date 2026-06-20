@@ -35,10 +35,14 @@ api.interceptors.response.use(
     const errorCode = error.response?.data?.errorCode
 
     if (errorCode === 'ERR_09') {
-      // Session expired — clear auth and redirect to login
-      useAuthStore.getState().clearAuth()
-      console.warn('[Viscraft] Session expired. Redirecting to login.')
-      window.location.href = '/'
+      // Session expired — only redirect if user was authenticated (has token)
+      const token = useAuthStore.getState().token
+      if (token) {
+        useAuthStore.getState().clearAuth()
+        console.warn('[Viscraft] Session expired. Redirecting to login.')
+        window.location.href = '/'
+      }
+      // kalau tidak ada token = login attempt gagal, biarkan error bubble ke caller
     } else if (errorCode === 'ERR_01') {
       // Resource not found — toast and redirect to workspace
       showToast({ type: 'error', title: ERROR_MESSAGES.ERR_01 })

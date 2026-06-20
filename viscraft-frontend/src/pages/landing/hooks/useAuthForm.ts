@@ -87,7 +87,14 @@ export function useAuthForm(onSuccess: () => void) {
       if (axiosError.response?.data?.errorCode) {
         const code = axiosError.response.data.errorCode
         const backendMessage = axiosError.response.data.message
-        setApiError(backendMessage ?? (ERROR_MESSAGES[code] ?? 'An error occurred'))
+        const message = backendMessage ?? (ERROR_MESSAGES[code] ?? 'An error occurred')
+
+        // Login error: tampilkan di bawah password field
+        if (activeTab === 'login') {
+          setPasswordError(message)
+        } else {
+          setApiError(message)
+        }
       } else {
         setApiError(ERROR_MESSAGES.NETWORK_ERROR)
       }

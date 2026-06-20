@@ -17,7 +17,7 @@ var (
 	ErrStorageFailed     = AppError{Code: "ERR_06", Message: "Failed to store image", HttpStatus: 500}
 	ErrDatabaseFailed    = AppError{Code: "ERR_07", Message: "Database operation failed", HttpStatus: 500}
 	ErrProjectNotFound   = AppError{Code: "ERR_08", Message: "Project not found", HttpStatus: 404}
-	ErrUnauthorized      = AppError{Code: "ERR_09", Message: "Unauthorized", HttpStatus: 401}
+	ErrUnauthorized      = AppError{Code: "ERR_09", Message: "Invalid email or password", HttpStatus: 401}
 	ErrInternalServer    = AppError{Code: "ERR_10", Message: "Internal server error", HttpStatus: 500}
 	ErrValidationFailed  = AppError{Code: "ERR_11", Message: "Validation failed", HttpStatus: 422}
 	ErrDuplicateResource = AppError{Code: "ERR_12", Message: "Resource already exists", HttpStatus: 409}

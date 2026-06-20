@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Box, Button, Text, HStack, Flex } from '@chakra-ui/react'
 import { createPortal } from 'react-dom'
-
-const TOUR_STORAGE_KEY = 'viscraft-tour-completed-v2'
+import { useAuthStore } from '../store/authStore'
+import { completeTour } from '../service/auth'
 
 interface TourStep {
   target: string
@@ -63,7 +63,7 @@ function TooltipBox({
 
   const PADDING = 8
   const TOOLTIP_W = 300
-  const TOOLTIP_H = 200 // estimate
+  const TOOLTIP_H = 200
   const scrollY = window.scrollY
 
   let top = 0
@@ -88,7 +88,6 @@ function TooltipBox({
       break
   }
 
-  // Clamp to viewport
   left = Math.max(PADDING, Math.min(left, window.innerWidth - TOOLTIP_W - PADDING))
   top = Math.max(PADDING, top)
 
@@ -171,30 +170,44 @@ function TooltipBox({
 }
 
 export function OnboardingTour() {
+  const user = useAuthStore((s) => s.user)
+  const updateUser = useAuthStore((s) => s.updateUser)
   const [step, setStep] = useState<number | null>(null)
 
   useEffect(() => {
-    const done = localStorage.getItem(TOUR_STORAGE_KEY)
-    if (!done) {
+    // Tour hanya muncul kalau user belum complete tour (dari DB)
+    if (user && !user.tourCompleted) {
       const timer = setTimeout(() => setStep(0), 2000)
       return () => clearTimeout(timer)
     }
-  }, [])
+  }, [user])
+
+  const markDone = useCallback(async () => {
+    setStep(null)
+    // Update DB
+    try {
+      await completeTour()
+    } catch {
+      // silent fail, tidak kritis
+    }
+    // Update local state biar tidak muncul lagi tanpa reload
+    if (user) {
+      updateUser({ ...user, tourCompleted: true })
+    }
+  }, [user, updateUser])
 
   const handleNext = useCallback(() => {
     if (step === null) return
     if (step >= STEPS.length - 1) {
-      setStep(null)
-      localStorage.setItem(TOUR_STORAGE_KEY, 'true')
+      markDone()
     } else {
       setStep(step + 1)
     }
-  }, [step])
+  }, [step, markDone])
 
   const handleSkip = useCallback(() => {
-    setStep(null)
-    localStorage.setItem(TOUR_STORAGE_KEY, 'true')
-  }, [])
+    markDone()
+  }, [markDone])
 
   if (step === null || step >= STEPS.length) return null
 

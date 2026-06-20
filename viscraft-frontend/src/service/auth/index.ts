@@ -23,3 +23,8 @@ export async function deleteUser(): Promise<ApiResponse<void>> {
   const response = await api.post<ApiResponse<void>>('/users/delete', {})
   return response.data
 }
+
+export async function completeTour(): Promise<ApiResponse<void>> {
+  const response = await api.post<ApiResponse<void>>('/users/complete-tour', {})
+  return response.data
+}

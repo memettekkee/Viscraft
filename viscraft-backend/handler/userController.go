@@ -26,6 +26,7 @@ func (uc *UserController) Routes() []router.Route {
 		{Path: "/users/login", Handler: uc.Login, Protected: false},
 		{Path: "/users/get", Handler: uc.Get, Protected: true},
 		{Path: "/users/delete", Handler: uc.Delete, Protected: true},
+		{Path: "/users/complete-tour", Handler: uc.CompleteTour, Protected: true},
 	}
 }
 
@@ -111,6 +112,25 @@ func (uc *UserController) Delete(c *gin.Context) {
 	userId := c.GetString("userId")
 
 	res, appErr := uc.userService.DeleteUser(requestId, userId)
+	if appErr != nil {
+		c.JSON(appErr.HttpStatus, response.BaseResponse{
+			RequestId: requestId,
+			Success:   false,
+			ErrorCode: appErr.Code,
+			Message:   appErr.Message,
+		})
+		return
+	}
+
+	res.RequestId = requestId
+	c.JSON(http.StatusOK, res)
+}
+
+func (uc *UserController) CompleteTour(c *gin.Context) {
+	requestId := c.GetString("requestId")
+	userId := c.GetString("userId")
+
+	res, appErr := uc.userService.CompleteTour(requestId, userId)
 	if appErr != nil {
 		c.JSON(appErr.HttpStatus, response.BaseResponse{
 			RequestId: requestId,

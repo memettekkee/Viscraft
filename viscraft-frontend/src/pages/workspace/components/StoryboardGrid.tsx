@@ -3,12 +3,12 @@ import { useSceneList } from '../hooks/useSceneList'
 import { useWorkspaceStore } from '../../../store/workspaceStore'
 import { useSceneActions } from '../hooks/useSceneActions'
 import { useDeleteConfirmation } from '../hooks/useDeleteConfirmation'
-import { EmptyState } from '../../../components/common/EmptyState'
 import { ConfirmationModal } from '../../../components/common/ConfirmationModal'
 import { ImageCardSkeleton } from '../../../components/skeleton/ImageCardSkeleton'
 import { SceneCard } from './SceneCard'
 import { SceneDetailModal } from './SceneDetailModal'
 import { PollingSceneCard } from './PollingSceneCard'
+import { GenerateModal } from './GenerateModal'
 import type { Scene } from '../../../types'
 
 interface StoryboardGridProps {
@@ -18,6 +18,8 @@ interface StoryboardGridProps {
 export function StoryboardGrid({ projectId }: StoryboardGridProps) {
   const { scenes, isLoading } = useSceneList(projectId)
   const openGenerateModal = useWorkspaceStore((s) => s.openGenerateModal)
+  const generateModalOpen = useWorkspaceStore((s) => s.generateModalOpen)
+  const closeModal = useWorkspaceStore((s) => s.closeModal)
   const { handleRegenerate } = useSceneActions()
   const {
     isDeleteModalOpen,
@@ -39,11 +41,12 @@ export function StoryboardGrid({ projectId }: StoryboardGridProps) {
 
   if (scenes.length === 0) {
     return (
-      <EmptyState
-        onAction={openGenerateModal}
-        title="No ad shots yet"
-        description="Start generating ad shots for your product campaign."
-      />
+      <>
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 3, xl: 4 }} gap="4">
+          <GeneratePlaceholderCard onClick={() => openGenerateModal()} />
+        </SimpleGrid>
+        <GenerateModal isOpen={generateModalOpen} onClose={closeModal} />
+      </>
     )
   }
 

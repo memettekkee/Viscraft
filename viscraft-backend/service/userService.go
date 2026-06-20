@@ -27,11 +27,11 @@ type StorageDeleter interface {
 }
 
 type UserService struct {
-	userRepo  *repository.UserRepository
+	userRepo    *repository.UserRepository
 	imageFinder ImageFinder
 	storage     StorageDeleter
-	jwtSecret string
-	jwtExpiry time.Duration
+	jwtSecret   string
+	jwtExpiry   time.Duration
 }
 
 func NewUserService(
@@ -91,12 +91,7 @@ func (s *UserService) CreateUser(requestId string, req request.CreateUserRequest
 			Message:   "User created successfully",
 		},
 		Token: token,
-		Data: &response.UserData{
-			Id:        user.Id,
-			Email:     user.Email,
-			Name:      user.Name,
-			CreatedAt: user.CreatedAt.Format(time.RFC3339),
-		},
+		Data:  mapUserToData(user),
 	}, nil
 }
 
@@ -127,12 +122,7 @@ func (s *UserService) Login(requestId string, req request.LoginRequest) (respons
 			Message:   "Login successful",
 		},
 		Token: token,
-		Data: &response.UserData{
-			Id:        user.Id,
-			Email:     user.Email,
-			Name:      user.Name,
-			CreatedAt: user.CreatedAt.Format(time.RFC3339),
-		},
+		Data:  mapUserToData(user),
 	}, nil
 }
 
@@ -151,11 +141,23 @@ func (s *UserService) GetUser(requestId string, userId string) (response.GetUser
 			Success:   true,
 			Message:   "User retrieved successfully",
 		},
-		Data: &response.UserData{
-			Id:        user.Id,
-			Email:     user.Email,
-			Name:      user.Name,
-			CreatedAt: user.CreatedAt.Format(time.RFC3339),
+		Data: mapUserToData(user),
+	}, nil
+}
+
+func (s *UserService) CompleteTour(requestId string, userId string) (response.CompleteTourResponse, *constant.AppError) {
+	if err := s.userRepo.CompleteTour(userId); err != nil {
+		logger.Error(requestId, "failed to complete tour", err)
+		return response.CompleteTourResponse{}, &constant.ErrDatabaseFailed
+	}
+
+	logger.Info(requestId, "tour completed", "userId", userId)
+
+	return response.CompleteTourResponse{
+		BaseResponse: response.BaseResponse{
+			RequestId: requestId,
+			Success:   true,
+			Message:   "Tour completed",
 		},
 	}, nil
 }
@@ -228,4 +230,14 @@ func validateEmail(email string) *constant.AppError {
 func isDuplicateKeyError(err error) bool {
 	return strings.Contains(err.Error(), "duplicate key") ||
 		strings.Contains(err.Error(), "unique constraint")
+}
+
+func mapUserToData(u *repository.User) *response.UserData {
+	return &response.UserData{
+		Id:            u.Id,
+		Email:         u.Email,
+		Name:          u.Name,
+		CreatedAt:     u.CreatedAt.Format(time.RFC3339),
+		TourCompleted: u.TourCompleted,
+	}
 }

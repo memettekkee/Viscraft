@@ -9,11 +9,12 @@ import (
 )
 
 type User struct {
-	Id        string
-	Email     string
-	Password  string
-	Name      string
-	CreatedAt time.Time
+	Id            string
+	Email         string
+	Password      string
+	Name          string
+	CreatedAt     time.Time
+	TourCompleted bool
 }
 
 type UserRepository struct {
@@ -42,20 +43,21 @@ func (r *UserRepository) Insert(email, password, name string) (*User, error) {
 	}
 
 	return &User{
-		Id:        id,
-		Email:     email,
-		Password:  string(hashedPassword),
-		Name:      name,
-		CreatedAt: createdAt,
+		Id:            id,
+		Email:         email,
+		Password:      string(hashedPassword),
+		Name:          name,
+		CreatedAt:     createdAt,
+		TourCompleted: false,
 	}, nil
 }
 
 func (r *UserRepository) FindByEmail(email string) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(
-		`SELECT id, email, password, name, created_at FROM users WHERE email = $1`,
+		`SELECT id, email, password, name, created_at, tour_completed FROM users WHERE email = $1`,
 		email,
-	).Scan(&user.Id, &user.Email, &user.Password, &user.Name, &user.CreatedAt)
+	).Scan(&user.Id, &user.Email, &user.Password, &user.Name, &user.CreatedAt, &user.TourCompleted)
 	if err != nil {
 		return nil, err
 	}
@@ -65,13 +67,18 @@ func (r *UserRepository) FindByEmail(email string) (*User, error) {
 func (r *UserRepository) FindById(id string) (*User, error) {
 	user := &User{}
 	err := r.db.QueryRow(
-		`SELECT id, email, password, name, created_at FROM users WHERE id = $1`,
+		`SELECT id, email, password, name, created_at, tour_completed FROM users WHERE id = $1`,
 		id,
-	).Scan(&user.Id, &user.Email, &user.Password, &user.Name, &user.CreatedAt)
+	).Scan(&user.Id, &user.Email, &user.Password, &user.Name, &user.CreatedAt, &user.TourCompleted)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
+}
+
+func (r *UserRepository) CompleteTour(userId string) error {
+	_, err := r.db.Exec(`UPDATE users SET tour_completed = TRUE WHERE id = $1`, userId)
+	return err
 }
 
 func (r *UserRepository) Delete(userId string) error {
